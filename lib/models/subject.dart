@@ -19,7 +19,7 @@ class Chapter {
   final String name;
   final String subjectId;
   final String description;
-  final List<Material> materials;
+  final List<StudyMaterial> materials;
 
   Chapter({
     required this.id,
@@ -30,7 +30,7 @@ class Chapter {
   });
 }
 
-class Material {
+class StudyMaterial {
   final String id;
   final String title;
   final String type; // 'pdf', 'notes', 'video', 'quiz'
@@ -39,7 +39,7 @@ class Material {
   final String? description;
   final bool isPremium;
 
-  Material({
+  StudyMaterial({
     required this.id,
     required this.title,
     required this.type,

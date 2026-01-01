@@ -3,7 +3,7 @@ import '../models/subject.dart';
 import '../utils/constants.dart';
 
 class MaterialCard extends StatelessWidget {
-  final Material material;
+  final StudyMaterial material;
   final VoidCallback onTap;
 
   const MaterialCard({

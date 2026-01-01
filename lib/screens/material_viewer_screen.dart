@@ -3,7 +3,7 @@ import '../models/subject.dart';
 import '../utils/constants.dart';
 
 class MaterialViewerScreen extends StatelessWidget {
-  final Material material;
+  final StudyMaterial material;
 
   const MaterialViewerScreen({
     super.key,
