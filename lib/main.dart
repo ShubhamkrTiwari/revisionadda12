@@ -7,8 +7,21 @@ void main() {
   runApp(const RevisionAddaApp());
 }
 
-class RevisionAddaApp extends StatelessWidget {
+class RevisionAddaApp extends StatefulWidget {
   const RevisionAddaApp({super.key});
+
+  @override
+  State<RevisionAddaApp> createState() => _RevisionAddaAppState();
+}
+
+class _RevisionAddaAppState extends State<RevisionAddaApp> {
+  ThemeMode _themeMode = ThemeMode.system;
+
+  void changeThemeMode(ThemeMode mode) {
+    setState(() {
+      _themeMode = mode;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,8 +30,10 @@ class RevisionAddaApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      home: const SplashScreen(),
+      themeMode: _themeMode,
+      home: SplashScreen(
+        onThemeModeChanged: changeThemeMode,
+      ),
     );
   }
 }
