@@ -4,6 +4,7 @@ import '../utils/icon_helper.dart';
 import 'chapter_resources_screen.dart';
 import 'paper_viewer_screen.dart';
 import 'previous_year_papers_screen.dart';
+import 'roadmap_screen.dart';
 
 class SubjectDetailScreenV2 extends StatefulWidget {
   final Subject subject;
@@ -89,6 +90,29 @@ class _SubjectDetailScreenV2State extends State<SubjectDetailScreenV2> {
             ),
           ],
         ),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.map, color: Colors.white),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => RoadmapScreen(
+                      subjectId: widget.subject.id,
+                    ),
+                  ),
+                );
+              },
+              tooltip: 'View ${widget.subject.name} Roadmap',
+            ),
+          ),
+        ],
       ),
       body: Container(
         decoration: BoxDecoration(
