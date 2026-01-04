@@ -27,7 +27,8 @@ class _AvengerGameScreenState extends State<AvengerGameScreen> {
   int _levelScore = 0;
   bool _levelCompleted = false;
   bool _gameCompleted = false;
-  Map<int, bool> _completedLevels = {};
+  Map<int, bool> _completedLevels = {}; // Track completed levels
+  Map<int, bool> _unlockedLevels = {0: true}; // Track unlocked levels (Level 1 is unlocked by default)
 
   @override
   void initState() {
@@ -85,20 +86,23 @@ class _AvengerGameScreenState extends State<AvengerGameScreen> {
         _showExplanation = false;
       });
     } else {
-      // Level completed
+      // Level completed - all questions answered
       setState(() {
         _levelCompleted = true;
         _completedLevels[_currentLevelIndex] = true;
-        // Unlock next level
+        // Unlock next level if exists
         if (_currentLevelIndex < _game!.levels.length - 1) {
-          _game!.levels[_currentLevelIndex + 1] = GameLevel(
-            levelNumber: _game!.levels[_currentLevelIndex + 1].levelNumber,
-            levelName: _game!.levels[_currentLevelIndex + 1].levelName,
-            avengerName: _game!.levels[_currentLevelIndex + 1].avengerName,
-            avengerIcon: _game!.levels[_currentLevelIndex + 1].avengerIcon,
-            avengerColor: _game!.levels[_currentLevelIndex + 1].avengerColor,
-            questions: _game!.levels[_currentLevelIndex + 1].questions,
-            isUnlocked: true,
+          final nextLevelIndex = _currentLevelIndex + 1;
+          _unlockedLevels[nextLevelIndex] = true; // Mark next level as unlocked
+          final nextLevel = _game!.levels[nextLevelIndex];
+          _game!.levels[nextLevelIndex] = GameLevel(
+            levelNumber: nextLevel.levelNumber,
+            levelName: nextLevel.levelName,
+            avengerName: nextLevel.avengerName,
+            avengerIcon: nextLevel.avengerIcon,
+            avengerColor: nextLevel.avengerColor,
+            questions: nextLevel.questions,
+            isUnlocked: true, // Unlock next level
             isCompleted: false,
           );
         }
@@ -110,8 +114,26 @@ class _AvengerGameScreenState extends State<AvengerGameScreen> {
     if (_game == null) return;
 
     if (_currentLevelIndex < _game!.levels.length - 1) {
+      final nextLevelIndex = _currentLevelIndex + 1;
+      
+      // Ensure next level is unlocked
+      _unlockedLevels[nextLevelIndex] = true;
+      
+      // Update the next level in game to be unlocked
+      final nextLevel = _game!.levels[nextLevelIndex];
+      _game!.levels[nextLevelIndex] = GameLevel(
+        levelNumber: nextLevel.levelNumber,
+        levelName: nextLevel.levelName,
+        avengerName: nextLevel.avengerName,
+        avengerIcon: nextLevel.avengerIcon,
+        avengerColor: nextLevel.avengerColor,
+        questions: nextLevel.questions,
+        isUnlocked: true,
+        isCompleted: false,
+      );
+      
       setState(() {
-        _currentLevelIndex++;
+        _currentLevelIndex = nextLevelIndex;
         _currentQuestionIndex = 0;
         _selectedAnswer = null;
         _showExplanation = false;
@@ -143,7 +165,7 @@ class _AvengerGameScreenState extends State<AvengerGameScreen> {
 
   void _restartGame() {
     setState(() {
-      _currentLevelIndex = 0;
+      _currentLevelIndex = -1; // Show level selection
       _currentQuestionIndex = 0;
       _selectedAnswer = null;
       _showExplanation = false;
@@ -152,6 +174,7 @@ class _AvengerGameScreenState extends State<AvengerGameScreen> {
       _levelCompleted = false;
       _gameCompleted = false;
       _completedLevels.clear();
+      _unlockedLevels = {0: true}; // Reset to only level 1 unlocked
     });
     _loadGame();
   }
@@ -859,9 +882,15 @@ class _AvengerGameScreenState extends State<AvengerGameScreen> {
 
   Widget _buildLevelCard(GameLevel level, int index, Color mainColor) {
     final color = _hexToColor(level.avengerColor);
-    // Level is unlocked only if it's the first level OR previous level is completed
-    // Also check if the level itself is marked as unlocked
-    final isUnlocked = level.isUnlocked || index == 0 || _completedLevels.containsKey(index - 1);
+    // Level is unlocked if:
+    // 1. It's the first level (index 0)
+    // 2. Previous level is completed
+    // 3. Level is marked as unlocked in the game
+    // 4. Level is in unlocked levels map
+    final isUnlocked = _unlockedLevels.containsKey(index) || 
+                       level.isUnlocked || 
+                       index == 0 || 
+                       _completedLevels.containsKey(index - 1);
     
     return GestureDetector(
       onTap: isUnlocked ? () => _selectLevel(index) : null,

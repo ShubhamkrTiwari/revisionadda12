@@ -1,10 +1,15 @@
 import '../models/avenger_game.dart';
 import '../models/game_level.dart';
+import '../models/subject.dart';
 import '../services/data_service.dart';
 import '../services/roadmap_service.dart';
 import '../services/ai_content_service.dart';
 
 class AvengerGameService {
+  // Store current chapter and subject for question generation
+  static Chapter? _currentChapter;
+  static Subject? _currentSubject;
+  
   static AvengerGame generateGameForChapter(String subjectId, String chapterId) {
     final chapter = DataService.getChapterById(subjectId, chapterId);
     final subject = DataService.getSubjectById(subjectId);
@@ -12,6 +17,10 @@ class AvengerGameService {
     if (chapter == null || subject == null) {
       return _getDefaultGame(chapterId, 'Unknown Chapter');
     }
+
+    // Store for question generation
+    _currentChapter = chapter;
+    _currentSubject = subject;
 
     final chapterIndex = subject.chapters.indexWhere((ch) => ch.id == chapterId);
     final mainAvenger = RoadmapService.getChapterAvenger(chapterIndex >= 0 ? chapterIndex : 0);
@@ -174,81 +183,94 @@ class AvengerGameService {
     int correctAnswer;
     String explanation;
     
+    final chapterDesc = _currentChapter?.description ?? '';
+    
+    // Generate meaningful questions based on chapter description and practice question
     if (levelNum <= 15) {
-      // Beginner level
-      if (subjectName == 'physics') {
-        question = questionText.contains('?') ? questionText : '$questionText in $chapter?';
-        options = [
-          'Physics principle related to $chapter',
-          'Chemistry concept',
-          'Mathematics theorem',
-          'Biology process'
-        ];
-        correctAnswer = 0;
-        explanation = 'This is a fundamental physics concept in $chapter that helps build your understanding.';
-      } else if (subjectName == 'mathematics' || subjectName.contains('math')) {
-        question = questionText.contains('?') ? questionText : '$questionText in $chapter?';
-        options = [
-          'Mathematical concept related to $chapter',
-          'Physics formula',
-          'Chemical equation',
-          'Biological system'
-        ];
-        correctAnswer = 0;
-        explanation = 'This is a fundamental mathematics concept in $chapter that helps build your understanding.';
-      } else if (subjectName == 'chemistry') {
-        question = questionText.contains('?') ? questionText : '$questionText in $chapter?';
-        options = [
-          'Chemistry concept related to $chapter',
-          'Physics law',
-          'Mathematical formula',
-          'Biological process'
-        ];
-        correctAnswer = 0;
-        explanation = 'This is a fundamental chemistry concept in $chapter that helps build your understanding.';
-      } else if (subjectName == 'biology') {
-        question = questionText.contains('?') ? questionText : '$questionText in $chapter?';
-        options = [
-          'Biological concept related to $chapter',
-          'Physics principle',
-          'Chemical reaction',
-          'Mathematical theorem'
-        ];
-        correctAnswer = 0;
-        explanation = 'This is a fundamental biology concept in $chapter that helps build your understanding.';
-      } else {
+      // Beginner level - use actual practice question text if meaningful
+      if (questionText.isNotEmpty && questionText.length > 20 && !questionText.contains('related to this chapter')) {
         question = questionText;
+        // Generate realistic options based on subject and chapter
+        if (subjectName == 'physics') {
+          final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(3).toList();
+          options = [
+            keywords.isNotEmpty ? keywords[0].trim() : 'Physics principle',
+            keywords.length > 1 ? keywords[1].trim() : 'Electric current',
+            keywords.length > 2 ? keywords[2].trim() : 'Magnetic field',
+            'Unrelated concept'
+          ];
+        } else if (subjectName == 'mathematics' || subjectName.contains('math')) {
+          final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(3).toList();
+          options = [
+            keywords.isNotEmpty ? keywords[0].trim() : 'Mathematical concept',
+            keywords.length > 1 ? keywords[1].trim() : 'Algebraic expression',
+            keywords.length > 2 ? keywords[2].trim() : 'Geometric property',
+            'Unrelated concept'
+          ];
+        } else if (subjectName == 'chemistry') {
+          final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(3).toList();
+          options = [
+            keywords.isNotEmpty ? keywords[0].trim() : 'Chemical reaction',
+            keywords.length > 1 ? keywords[1].trim() : 'Molecular structure',
+            keywords.length > 2 ? keywords[2].trim() : 'Chemical bond',
+            'Unrelated concept'
+          ];
+        } else if (subjectName == 'biology') {
+          final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(3).toList();
+          options = [
+            keywords.isNotEmpty ? keywords[0].trim() : 'Biological process',
+            keywords.length > 1 ? keywords[1].trim() : 'Cellular function',
+            keywords.length > 2 ? keywords[2].trim() : 'Organ system',
+            'Unrelated concept'
+          ];
+        } else {
+          final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(3).toList();
+          options = [
+            keywords.isNotEmpty ? keywords[0].trim() : 'Core concept',
+            keywords.length > 1 ? keywords[1].trim() : 'Key principle',
+            keywords.length > 2 ? keywords[2].trim() : 'Important topic',
+            'Unrelated concept'
+          ];
+        }
+        correctAnswer = 0;
+        explanation = 'This question tests your understanding of $chapter concepts.';
+      } else {
+        // Generate question from chapter description
+        final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(2).toList();
+        question = 'What is an important aspect of $chapter?';
         options = [
-          'Correct answer related to $chapter',
-          'Incorrect option 1',
-          'Incorrect option 2',
-          'Incorrect option 3',
+          keywords.isNotEmpty ? keywords[0].trim() : 'Fundamental principles',
+          keywords.length > 1 ? keywords[1].trim() : 'Core concepts',
+          'Unrelated topic',
+          'Basic definition'
         ];
         correctAnswer = 0;
-        explanation = 'This is a fundamental concept in $chapter that helps build your understanding.';
+        explanation = 'This chapter covers important concepts in ${subject.toLowerCase()}.';
       }
     } else if (levelNum <= 30) {
-      // Intermediate level
-      question = 'How does $questionText apply in $chapter?';
+      // Intermediate level - application questions
+      final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(2).toList();
+      question = 'How can you apply concepts from $chapter in real-world scenarios?';
       options = [
-        'Through practical application in ${subject.toLowerCase()}',
-        'Only theoretically',
-        'Not applicable to ${subject.toLowerCase()}',
-        'Only in exams'
+        keywords.isNotEmpty ? 'Through ${keywords[0].trim().toLowerCase()} applications' : 'Through practical applications',
+        'Only in theoretical problems',
+        'Not applicable in real life',
+        'Only in laboratory settings'
       ];
       correctAnswer = 0;
-      explanation = 'Understanding practical applications helps master $chapter concepts in ${subject.toLowerCase()}.';
+      explanation = 'Understanding practical applications helps master $chapter concepts.';
     } else {
-      // Advanced level
-      question = 'What advanced concept in ${subject.toLowerCase()} relates to: $questionText?';
+      // Advanced level - deeper understanding
+      final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(2).toList();
+      question = 'What advanced understanding is required for $chapter?';
       options = [
-        'Advanced application of $chapter in ${subject.toLowerCase()}',
-        'Basic definition',
-        'Unrelated ${subject.toLowerCase()} concept',
-        'Simple example'
+        keywords.isNotEmpty ? 'Deep knowledge of ${keywords[0].trim().toLowerCase()}' : 'Advanced conceptual understanding',
+        'Basic memorization',
+        'Simple definitions',
+        'Surface-level knowledge'
       ];
       correctAnswer = 0;
-      explanation = 'Advanced levels require deep understanding of $chapter principles in ${subject.toLowerCase()}.';
+      explanation = 'Advanced levels require deep understanding of $chapter principles.';
     }
     
     return AvengerGameQuestion(
@@ -274,93 +296,121 @@ class AvengerGameService {
   ) {
     final title = concept['title'] as String? ?? 'Concept';
     final description = concept['description'] as String? ?? '';
+    final chapterDesc = _currentChapter?.description ?? '';
+    final subjectName = subject.toLowerCase();
+    final chapterName = chapter.toLowerCase();
     
-    // Get chapter details for better question generation
-    final chapterData = DataService.getChapterById(
-      DataService.getSubjects().firstWhere((s) => s.name.toLowerCase() == subject.toLowerCase()).id,
-      DataService.getSubjects()
-          .firstWhere((s) => s.name.toLowerCase() == subject.toLowerCase())
-          .chapters.firstWhere((ch) => ch.name.toLowerCase() == chapter.toLowerCase()).id,
-    );
-    final chapterDesc = chapterData?.description ?? '';
-    
-    // Generate subject and chapter-specific questions
+    // Generate subject and chapter-specific questions based on chapter description
     String question;
     List<String> options;
     int correctAnswer;
     String explanation;
 
-    // Physics-specific questions
-    if (subject.toLowerCase() == 'physics') {
-      if (chapter.toLowerCase().contains('electric') || title.toLowerCase().contains('electric')) {
+    // Physics-specific questions based on chapter description
+    if (subjectName == 'physics') {
+      if ((chapterName.contains('electric') && (chapterName.contains('charge') || chapterDesc.contains('charge'))) || chapterDesc.contains('coulomb') || chapterDesc.contains('electric charge') || title.toLowerCase().contains('electric')) {
         question = 'What is the unit of electric charge?';
         options = ['Coulomb (C)', 'Volt (V)', 'Ampere (A)', 'Ohm (Ω)'];
         correctAnswer = 0;
         explanation = 'Electric charge is measured in Coulombs (C). This is a fundamental unit in physics.';
-      } else if (chapter.toLowerCase().contains('current') || title.toLowerCase().contains('current')) {
+      } else if (chapterName.contains('current') || chapterDesc.contains('ohm') || chapterDesc.contains('resistance') || chapterDesc.contains('kirchhoff') || chapterDesc.contains('wheatstone') || title.toLowerCase().contains('current')) {
         question = 'According to Ohm\'s Law, what is the relationship between voltage, current, and resistance?';
         options = ['V = IR', 'I = VR', 'R = VI', 'V = I/R'];
         correctAnswer = 0;
         explanation = 'Ohm\'s Law states: V = IR, where V is voltage, I is current, and R is resistance.';
-      } else if (chapter.toLowerCase().contains('magnetic') || title.toLowerCase().contains('magnetic')) {
+      } else if (chapterName.contains('magnetic') || chapterDesc.contains('magnetic') || chapterDesc.contains('magnet') || chapterDesc.contains('biot-savart') || chapterDesc.contains('ampere') || title.toLowerCase().contains('magnetic')) {
         question = 'What is the SI unit of magnetic field?';
         options = ['Tesla (T)', 'Gauss (G)', 'Weber (Wb)', 'Henry (H)'];
         correctAnswer = 0;
         explanation = 'Magnetic field is measured in Tesla (T) in SI units.';
-      } else if (chapter.toLowerCase().contains('wave') || title.toLowerCase().contains('wave')) {
+      } else if (chapterName.contains('wave') || chapterDesc.contains('wave') || chapterDesc.contains('electromagnetic') || chapterDesc.contains('spectrum') || title.toLowerCase().contains('wave')) {
         question = 'What is the speed of light in vacuum?';
         options = ['3 × 10⁸ m/s', '3 × 10⁶ m/s', '3 × 10¹⁰ m/s', '3 × 10⁴ m/s'];
         correctAnswer = 0;
         explanation = 'The speed of light in vacuum is approximately 3 × 10⁸ meters per second.';
-      } else {
-        question = 'What is a key concept in $chapter?';
+      } else if (chapterDesc.contains('potential') || chapterName.contains('potential') || chapterDesc.contains('capacitance') || chapterDesc.contains('capacitor')) {
+        question = 'What is electric potential?';
         options = [
-          description.isNotEmpty ? description.substring(0, description.length > 50 ? 50 : description.length) : 'Fundamental principle of $chapter',
-          'Unrelated physics concept',
-          'Chemistry concept',
-          'Mathematics concept'
+          'Work done per unit charge',
+          'Force per unit charge',
+          'Charge per unit area',
+          'Current per unit time'
         ];
         correctAnswer = 0;
-        explanation = description.isNotEmpty ? description : 'This is an important concept in $chapter.';
+        explanation = 'Electric potential is the work done per unit charge to bring a charge from infinity to a point.';
+      } else if (chapterDesc.contains('induction') || chapterName.contains('induction') || chapterDesc.contains('faraday') || chapterDesc.contains('lenz')) {
+        question = 'What does Faraday\'s law of electromagnetic induction state?';
+        options = [
+          'EMF is induced when magnetic flux changes',
+          'EMF is constant',
+          'No EMF is induced',
+          'EMF depends only on current'
+        ];
+        correctAnswer = 0;
+        explanation = 'Faraday\'s law states that an electromotive force (EMF) is induced in a circuit when the magnetic flux through it changes.';
+      } else {
+        // Generate question from chapter description keywords
+        final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(3).toList();
+        question = 'What is a key concept in $chapter?';
+        options = [
+          keywords.isNotEmpty ? keywords[0].trim() : (description.isNotEmpty ? description.substring(0, description.length > 50 ? 50 : description.length) : 'Fundamental principle of $chapter'),
+          keywords.length > 1 ? keywords[1].trim() : 'Secondary concept',
+          keywords.length > 2 ? keywords[2].trim() : 'Advanced topic',
+          'Unrelated concept'
+        ];
+        correctAnswer = 0;
+        explanation = description.isNotEmpty ? description : (chapterDesc.isNotEmpty ? chapterDesc : 'This is an important concept in $chapter.');
       }
     }
-    // Mathematics-specific questions
-    else if (subject.toLowerCase() == 'mathematics' || subject.toLowerCase().contains('math')) {
-      if (chapter.toLowerCase().contains('derivative') || title.toLowerCase().contains('derivative')) {
+    // Mathematics-specific questions based on chapter description
+    else if (subjectName == 'mathematics' || subjectName.contains('math')) {
+      if (chapterName.contains('derivative') || chapterDesc.contains('derivative') || chapterDesc.contains('differentiation') || title.toLowerCase().contains('derivative')) {
         question = 'What is the derivative of x²?';
         options = ['2x', 'x', 'x²', '2x²'];
         correctAnswer = 0;
         explanation = 'Using the power rule: d/dx(xⁿ) = nxⁿ⁻¹, so d/dx(x²) = 2x.';
-      } else if (chapter.toLowerCase().contains('integral') || title.toLowerCase().contains('integral')) {
+      } else if (chapterName.contains('integral') || chapterDesc.contains('integral') || chapterDesc.contains('integration') || title.toLowerCase().contains('integral')) {
         question = 'What is the integral of 2x?';
         options = ['x² + C', '2x + C', 'x²', '2x'];
         correctAnswer = 0;
         explanation = 'The integral of 2x is x² + C, where C is the constant of integration.';
-      } else if (chapter.toLowerCase().contains('trigonometric') || title.toLowerCase().contains('trigonometric')) {
+      } else if (chapterName.contains('trigonometric') || chapterDesc.contains('trigonometric') || chapterDesc.contains('sin') || chapterDesc.contains('cos') || title.toLowerCase().contains('trigonometric')) {
         question = 'What is sin²θ + cos²θ equal to?';
         options = ['1', '0', 'sin(2θ)', 'cos(2θ)'];
         correctAnswer = 0;
         explanation = 'This is a fundamental trigonometric identity: sin²θ + cos²θ = 1.';
-      } else if (chapter.toLowerCase().contains('matrix') || title.toLowerCase().contains('matrix')) {
+      } else if (chapterName.contains('matrix') || chapterDesc.contains('matrix') || chapterDesc.contains('determinant') || title.toLowerCase().contains('matrix')) {
         question = 'What is the determinant of a 2×2 matrix [[a,b],[c,d]]?';
         options = ['ad - bc', 'ab - cd', 'a + d', 'b + c'];
         correctAnswer = 0;
         explanation = 'For a 2×2 matrix, the determinant is calculated as ad - bc.';
-      } else {
-        question = 'What is a key concept in $chapter?';
+      } else if (chapterDesc.contains('function') || chapterName.contains('function') || chapterDesc.contains('relation')) {
+        question = 'What is a function?';
         options = [
-          description.isNotEmpty ? description.substring(0, description.length > 50 ? 50 : description.length) : 'Fundamental principle of $chapter',
-          'Unrelated math concept',
-          'Physics concept',
-          'Chemistry concept'
+          'A relation where each input has exactly one output',
+          'A relation with multiple outputs',
+          'Any relation',
+          'A set of numbers'
         ];
         correctAnswer = 0;
-        explanation = description.isNotEmpty ? description : 'This is an important concept in $chapter.';
+        explanation = 'A function is a relation where each input (domain) has exactly one output (range).';
+      } else {
+        // Generate question from chapter description keywords
+        final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(3).toList();
+        question = 'What is a key concept in $chapter?';
+        options = [
+          keywords.isNotEmpty ? keywords[0].trim() : (description.isNotEmpty ? description.substring(0, description.length > 50 ? 50 : description.length) : 'Fundamental principle of $chapter'),
+          keywords.length > 1 ? keywords[1].trim() : 'Secondary concept',
+          keywords.length > 2 ? keywords[2].trim() : 'Advanced topic',
+          'Unrelated concept'
+        ];
+        correctAnswer = 0;
+        explanation = description.isNotEmpty ? description : (chapterDesc.isNotEmpty ? chapterDesc : 'This is an important concept in $chapter.');
       }
     }
-    // Chemistry-specific questions
-    else if (subject.toLowerCase() == 'chemistry') {
-      if (chapter.toLowerCase().contains('reaction') || title.toLowerCase().contains('reaction')) {
+    // Chemistry-specific questions based on chapter description
+    else if (subjectName == 'chemistry') {
+      if (chapterName.contains('reaction') || chapterDesc.contains('reaction') || chapterDesc.contains('chemical') || title.toLowerCase().contains('reaction')) {
         question = 'What happens in a chemical reaction?';
         options = [
           'Atoms rearrange to form new substances',
@@ -370,7 +420,7 @@ class AvengerGameService {
         ];
         correctAnswer = 0;
         explanation = 'In a chemical reaction, atoms rearrange to form new substances. Atoms are neither created nor destroyed (Law of Conservation of Mass).';
-      } else if (chapter.toLowerCase().contains('solution') || title.toLowerCase().contains('solution')) {
+      } else if (chapterName.contains('solution') || chapterDesc.contains('solution') || chapterDesc.contains('solute') || chapterDesc.contains('solvent') || title.toLowerCase().contains('solution')) {
         question = 'What is a solution?';
         options = [
           'A homogeneous mixture of two or more substances',
@@ -380,7 +430,7 @@ class AvengerGameService {
         ];
         correctAnswer = 0;
         explanation = 'A solution is a homogeneous mixture where one substance (solute) is dissolved in another (solvent).';
-      } else if (chapter.toLowerCase().contains('equilibrium') || title.toLowerCase().contains('equilibrium')) {
+      } else if (chapterName.contains('equilibrium') || chapterDesc.contains('equilibrium') || chapterDesc.contains('reversible') || title.toLowerCase().contains('equilibrium')) {
         question = 'What is chemical equilibrium?';
         options = [
           'State where forward and reverse reaction rates are equal',
@@ -390,21 +440,33 @@ class AvengerGameService {
         ];
         correctAnswer = 0;
         explanation = 'Chemical equilibrium is a dynamic state where the rates of forward and reverse reactions are equal.';
-      } else {
-        question = 'What is a key concept in $chapter?';
+      } else if (chapterDesc.contains('solid') || chapterName.contains('solid') || chapterDesc.contains('crystal')) {
+        question = 'What is a crystal lattice?';
         options = [
-          description.isNotEmpty ? description.substring(0, description.length > 50 ? 50 : description.length) : 'Fundamental principle of $chapter',
-          'Unrelated chemistry concept',
-          'Physics concept',
-          'Biology concept'
+          'Regular arrangement of atoms or molecules',
+          'Random arrangement',
+          'Liquid structure',
+          'Gas structure'
         ];
         correctAnswer = 0;
-        explanation = description.isNotEmpty ? description : 'This is an important concept in $chapter.';
+        explanation = 'A crystal lattice is a regular, repeating arrangement of atoms, ions, or molecules in a solid.';
+      } else {
+        // Generate question from chapter description keywords
+        final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(3).toList();
+        question = 'What is a key concept in $chapter?';
+        options = [
+          keywords.isNotEmpty ? keywords[0].trim() : (description.isNotEmpty ? description.substring(0, description.length > 50 ? 50 : description.length) : 'Fundamental principle of $chapter'),
+          keywords.length > 1 ? keywords[1].trim() : 'Secondary concept',
+          keywords.length > 2 ? keywords[2].trim() : 'Advanced topic',
+          'Unrelated concept'
+        ];
+        correctAnswer = 0;
+        explanation = description.isNotEmpty ? description : (chapterDesc.isNotEmpty ? chapterDesc : 'This is an important concept in $chapter.');
       }
     }
-    // Biology-specific questions
-    else if (subject.toLowerCase() == 'biology') {
-      if (chapter.toLowerCase().contains('reproduction') || title.toLowerCase().contains('reproduction')) {
+    // Biology-specific questions based on chapter description
+    else if (subjectName == 'biology') {
+      if (chapterName.contains('reproduction') || chapterDesc.contains('reproduction') || chapterDesc.contains('gamete') || chapterDesc.contains('sexual') || chapterDesc.contains('asexual') || title.toLowerCase().contains('reproduction')) {
         question = 'What is the main difference between asexual and sexual reproduction?';
         options = [
           'Sexual reproduction involves fusion of gametes',
@@ -414,7 +476,7 @@ class AvengerGameService {
         ];
         correctAnswer = 0;
         explanation = 'Sexual reproduction involves the fusion of male and female gametes, while asexual reproduction does not.';
-      } else if (chapter.toLowerCase().contains('genetics') || title.toLowerCase().contains('genetics')) {
+      } else if (chapterName.contains('genetics') || chapterDesc.contains('genetics') || chapterDesc.contains('gene') || chapterDesc.contains('heredity') || chapterDesc.contains('dna') || title.toLowerCase().contains('genetics')) {
         question = 'What is a gene?';
         options = [
           'A unit of heredity that codes for a protein',
@@ -424,7 +486,7 @@ class AvengerGameService {
         ];
         correctAnswer = 0;
         explanation = 'A gene is a unit of heredity that contains the information to code for a specific protein.';
-      } else if (chapter.toLowerCase().contains('ecosystem') || title.toLowerCase().contains('ecosystem')) {
+      } else if (chapterName.contains('ecosystem') || chapterDesc.contains('ecosystem') || chapterDesc.contains('biodiversity') || chapterDesc.contains('environment') || chapterDesc.contains('conservation') || title.toLowerCase().contains('ecosystem')) {
         question = 'What is an ecosystem?';
         options = [
           'A community of living organisms and their environment',
@@ -434,16 +496,28 @@ class AvengerGameService {
         ];
         correctAnswer = 0;
         explanation = 'An ecosystem includes all living organisms (biotic) and their physical environment (abiotic) interacting as a system.';
-      } else {
-        question = 'What is a key concept in $chapter?';
+      } else if (chapterDesc.contains('cell') || chapterName.contains('cell') || chapterDesc.contains('mitosis') || chapterDesc.contains('meiosis')) {
+        question = 'What is the basic unit of life?';
         options = [
-          description.isNotEmpty ? description.substring(0, description.length > 50 ? 50 : description.length) : 'Fundamental principle of $chapter',
-          'Unrelated biology concept',
-          'Physics concept',
-          'Chemistry concept'
+          'Cell',
+          'Tissue',
+          'Organ',
+          'Organism'
         ];
         correctAnswer = 0;
-        explanation = description.isNotEmpty ? description : 'This is an important concept in $chapter.';
+        explanation = 'The cell is the basic structural and functional unit of all living organisms.';
+      } else {
+        // Generate question from chapter description keywords
+        final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(3).toList();
+        question = 'What is a key concept in $chapter?';
+        options = [
+          keywords.isNotEmpty ? keywords[0].trim() : (description.isNotEmpty ? description.substring(0, description.length > 50 ? 50 : description.length) : 'Fundamental principle of $chapter'),
+          keywords.length > 1 ? keywords[1].trim() : 'Secondary concept',
+          keywords.length > 2 ? keywords[2].trim() : 'Advanced topic',
+          'Unrelated concept'
+        ];
+        correctAnswer = 0;
+        explanation = description.isNotEmpty ? description : (chapterDesc.isNotEmpty ? chapterDesc : 'This is an important concept in $chapter.');
       }
     }
     // Default for any other subject
@@ -515,15 +589,30 @@ class AvengerGameService {
         correctAnswer = 0;
         explanation = 'E = mc² represents mass-energy equivalence, where E is energy, m is mass, and c is speed of light.';
       } else {
-        question = 'What does this physics formula represent: $formulaText?';
-        options = [
-          description.isNotEmpty ? description : 'Physics principle',
-          'Chemistry formula',
-          'Mathematics formula',
-          'Biology concept'
-        ];
+        // Generate meaningful question from chapter and formula
+        final chapterDesc = _currentChapter?.description ?? '';
+        final chapterName = _currentChapter?.name ?? '';
+        final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(2).toList();
+        
+        if (formulaText.isNotEmpty && formulaText.length > 3) {
+          question = 'What does the formula $formulaText represent in $chapterName?';
+          options = [
+            description.isNotEmpty ? description.substring(0, description.length > 60 ? 60 : description.length) : (keywords.isNotEmpty ? keywords[0].trim() : 'Physics principle'),
+            keywords.length > 1 ? keywords[1].trim() : 'Electric field',
+            'Chemical reaction',
+            'Mathematical theorem'
+          ];
+        } else {
+          question = 'What is an important physics formula in $chapterName?';
+          options = [
+            keywords.isNotEmpty ? keywords[0].trim() : (description.isNotEmpty ? description.substring(0, description.length > 60 ? 60 : description.length) : 'Core physics principle'),
+            keywords.length > 1 ? keywords[1].trim() : 'Related physics concept',
+            'Chemistry formula',
+            'Biology concept'
+          ];
+        }
         correctAnswer = 0;
-        explanation = description.isNotEmpty ? description : 'This is an important formula in physics.';
+        explanation = description.isNotEmpty ? description : (chapterDesc.isNotEmpty ? chapterDesc : 'This is an important formula in $chapterName.');
       }
     }
     // Mathematics formulas
@@ -554,15 +643,30 @@ class AvengerGameService {
         correctAnswer = 0;
         explanation = 'This is a fundamental trigonometric identity: sin²θ + cos²θ = 1.';
       } else {
-        question = 'What does this mathematics formula represent: $formulaText?';
-        options = [
-          description.isNotEmpty ? description : 'Mathematical principle',
-          'Physics formula',
-          'Chemistry formula',
-          'Biology concept'
-        ];
+        // Generate meaningful question from chapter and formula
+        final chapterDesc = _currentChapter?.description ?? '';
+        final chapterName = _currentChapter?.name ?? '';
+        final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(2).toList();
+        
+        if (formulaText.isNotEmpty && formulaText.length > 3) {
+          question = 'What does the formula $formulaText represent in $chapterName?';
+          options = [
+            description.isNotEmpty ? description.substring(0, description.length > 60 ? 60 : description.length) : (keywords.isNotEmpty ? keywords[0].trim() : 'Mathematical principle'),
+            keywords.length > 1 ? keywords[1].trim() : 'Algebraic expression',
+            'Physics formula',
+            'Chemistry equation'
+          ];
+        } else {
+          question = 'What is an important mathematics formula in $chapterName?';
+          options = [
+            keywords.isNotEmpty ? keywords[0].trim() : (description.isNotEmpty ? description.substring(0, description.length > 60 ? 60 : description.length) : 'Core mathematical principle'),
+            keywords.length > 1 ? keywords[1].trim() : 'Related math concept',
+            'Physics formula',
+            'Chemistry equation'
+          ];
+        }
         correctAnswer = 0;
-        explanation = description.isNotEmpty ? description : 'This is an important formula in mathematics.';
+        explanation = description.isNotEmpty ? description : (chapterDesc.isNotEmpty ? chapterDesc : 'This is an important formula in $chapterName.');
       }
     }
     // Chemistry formulas
@@ -588,40 +692,129 @@ class AvengerGameService {
         correctAnswer = 0;
         explanation = 'pH = -log[H⁺], representing the acidity or basicity of a solution.';
       } else {
-        question = 'What does this chemistry formula represent: $formulaText?';
-        options = [
-          description.isNotEmpty ? description : 'Chemistry principle',
-          'Physics formula',
-          'Mathematics formula',
-          'Biology concept'
-        ];
+        // Generate meaningful question from chapter and formula
+        final chapterDesc = _currentChapter?.description ?? '';
+        final chapterName = _currentChapter?.name ?? '';
+        final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(2).toList();
+        
+        if (formulaText.isNotEmpty && formulaText.length > 3) {
+          question = 'What does the formula $formulaText represent in $chapterName?';
+          options = [
+            description.isNotEmpty ? description.substring(0, description.length > 60 ? 60 : description.length) : (keywords.isNotEmpty ? keywords[0].trim() : 'Chemistry principle'),
+            keywords.length > 1 ? keywords[1].trim() : 'Chemical reaction',
+            'Physics formula',
+            'Mathematical equation'
+          ];
+        } else {
+          question = 'What is an important chemistry formula in $chapterName?';
+          options = [
+            keywords.isNotEmpty ? keywords[0].trim() : (description.isNotEmpty ? description.substring(0, description.length > 60 ? 60 : description.length) : 'Core chemistry principle'),
+            keywords.length > 1 ? keywords[1].trim() : 'Related chemical concept',
+            'Physics formula',
+            'Mathematical equation'
+          ];
+        }
         correctAnswer = 0;
-        explanation = description.isNotEmpty ? description : 'This is an important formula in chemistry.';
+        explanation = description.isNotEmpty ? description : (chapterDesc.isNotEmpty ? chapterDesc : 'This is an important formula in $chapterName.');
       }
     }
     // Biology (usually doesn't have formulas, but concepts)
     else if (subject.toLowerCase() == 'biology') {
-      question = 'What does this concept in biology represent: $formulaText?';
-      options = [
-        description.isNotEmpty ? description : 'Biological principle',
-        'Physics concept',
-        'Chemistry concept',
-        'Mathematics concept'
-      ];
-      correctAnswer = 0;
-      explanation = description.isNotEmpty ? description : 'This is an important concept in biology.';
+      final chapterDesc = _currentChapter?.description ?? '';
+      final chapterName = _currentChapter?.name ?? '';
+      
+      // Generate biology-specific questions based on chapter
+      if (chapterDesc.contains('cell') || chapterName.toLowerCase().contains('cell')) {
+        question = 'What is the basic structural unit of all living organisms?';
+        options = ['Cell', 'Tissue', 'Organ', 'Organ system'];
+        correctAnswer = 0;
+        explanation = 'The cell is the basic structural and functional unit of all living organisms.';
+      } else if (chapterDesc.contains('dna') || chapterDesc.contains('genetic') || chapterName.toLowerCase().contains('genetic')) {
+        question = 'What does DNA stand for?';
+        options = [
+          'Deoxyribonucleic Acid',
+          'Ribonucleic Acid',
+          'Deoxyribose Nucleic Acid',
+          'Double Nucleic Acid'
+        ];
+        correctAnswer = 0;
+        explanation = 'DNA stands for Deoxyribonucleic Acid, which carries genetic information.';
+      } else if (chapterDesc.contains('photosynthesis') || chapterName.toLowerCase().contains('photosynthesis')) {
+        question = 'What is the primary product of photosynthesis?';
+        options = ['Glucose', 'Oxygen', 'Carbon dioxide', 'Water'];
+        correctAnswer = 0;
+        explanation = 'Photosynthesis produces glucose (C₆H₁₂O₆) as the primary product, along with oxygen.';
+      } else if (chapterDesc.contains('respiration') || chapterName.toLowerCase().contains('respiration')) {
+        question = 'What is the main purpose of cellular respiration?';
+        options = [
+          'To produce ATP energy',
+          'To produce oxygen',
+          'To produce glucose',
+          'To produce carbon dioxide'
+        ];
+        correctAnswer = 0;
+        explanation = 'Cellular respiration breaks down glucose to produce ATP (adenosine triphosphate), the energy currency of cells.';
+      } else if (chapterDesc.contains('ecosystem') || chapterName.toLowerCase().contains('ecosystem')) {
+        question = 'What are the two main components of an ecosystem?';
+        options = [
+          'Biotic and abiotic factors',
+          'Plants and animals',
+          'Land and water',
+          'Producers and consumers'
+        ];
+        correctAnswer = 0;
+        explanation = 'An ecosystem consists of biotic (living) and abiotic (non-living) components that interact.';
+      } else {
+        // Generate meaningful question from chapter description
+        final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(2).toList();
+        if (keywords.isNotEmpty) {
+          question = 'Which of these is a key concept in ${chapterName}?';
+          options = [
+            keywords[0].trim(),
+            keywords.length > 1 ? keywords[1].trim() : 'Secondary biological process',
+            'Unrelated biology concept',
+            'Physics principle'
+          ];
+          correctAnswer = 0;
+          explanation = description.isNotEmpty ? description : 'This is an important concept in ${chapterName}.';
+        } else {
+          question = 'What is a fundamental principle in ${chapterName}?';
+          options = [
+            description.isNotEmpty ? description.substring(0, description.length > 60 ? 60 : description.length) : 'Core biological process',
+            'Chemical reaction',
+            'Physical law',
+            'Mathematical formula'
+          ];
+          correctAnswer = 0;
+          explanation = description.isNotEmpty ? description : 'This chapter covers important biological concepts.';
+        }
+      }
     }
-    // Default
+    // Default - generate from chapter description
     else {
-      question = 'What does this formula represent: $formulaText?';
-      options = [
-        description.isNotEmpty ? description : 'Main concept',
-        'Secondary formula',
-        'Alternative method',
-        'Basic definition'
-      ];
+      final chapterDesc = _currentChapter?.description ?? '';
+      final chapterName = _currentChapter?.name ?? '';
+      final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(2).toList();
+      
+      if (formulaText.isNotEmpty && formulaText.length > 3) {
+        question = 'What does the formula $formulaText represent in $chapterName?';
+        options = [
+          description.isNotEmpty ? description.substring(0, description.length > 60 ? 60 : description.length) : (keywords.isNotEmpty ? keywords[0].trim() : 'Core concept'),
+          keywords.length > 1 ? keywords[1].trim() : 'Related principle',
+          'Unrelated formula',
+          'Basic definition'
+        ];
+      } else {
+        question = 'What is an important formula or concept in $chapterName?';
+        options = [
+          keywords.isNotEmpty ? keywords[0].trim() : (description.isNotEmpty ? description.substring(0, description.length > 60 ? 60 : description.length) : 'Key principle'),
+          keywords.length > 1 ? keywords[1].trim() : 'Secondary concept',
+          'Unrelated topic',
+          'Basic definition'
+        ];
+      }
       correctAnswer = 0;
-      explanation = description.isNotEmpty ? description : 'This is an important formula.';
+      explanation = description.isNotEmpty ? description : (chapterDesc.isNotEmpty ? chapterDesc : 'This is an important concept in $chapterName.');
     }
 
     return AvengerGameQuestion(
