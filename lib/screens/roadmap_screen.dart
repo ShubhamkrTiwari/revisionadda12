@@ -4,6 +4,7 @@ import '../services/roadmap_service.dart';
 import '../models/roadmap_item.dart';
 import '../models/subject.dart';
 import 'subject_detail_screen_v2.dart';
+import 'chapter_concepts_screen.dart';
 
 class RoadmapScreen extends StatefulWidget {
   final String? subjectId;
@@ -256,16 +257,16 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
                 onTap: isLocked
                     ? null
                     : () {
-                        if (subject != null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SubjectDetailScreenV2(
-                                subject: subject,
-                              ),
+                        // Navigate to chapter concepts screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChapterConceptsScreen(
+                              subjectId: item.subjectId,
+                              chapterId: item.chapterId,
                             ),
-                          );
-                        }
+                          ),
+                        );
                       },
                 borderRadius: BorderRadius.circular(20),
                 child: Padding(
