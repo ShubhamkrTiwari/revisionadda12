@@ -5,6 +5,7 @@ import '../services/concept_service.dart';
 import '../services/data_service.dart';
 import '../services/roadmap_service.dart';
 import 'chapter_resources_screen.dart';
+import 'mindmap_screen.dart';
 
 class ChapterConceptsScreen extends StatefulWidget {
   final String subjectId;
@@ -74,7 +75,7 @@ class _ChapterConceptsScreenState extends State<ChapterConceptsScreen> {
               // Header
               _buildHeader(chapter, subject),
               
-              // View Full Chapter Resources Button
+              // Action Buttons Row
               if (chapter != null)
                 Builder(
                   builder: (context) {
@@ -87,28 +88,60 @@ class _ChapterConceptsScreenState extends State<ChapterConceptsScreen> {
                     
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ChapterResourcesScreen(
-                                chapter: chapter,
-                                resourceType: 'All',
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => MindMapScreen(
+                                      subjectId: widget.subjectId,
+                                      chapterId: widget.chapterId,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.account_tree),
+                              label: const Text('Mind Map'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _hexToColor(avengerColor),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                             ),
-                          );
-                        },
-                        icon: const Icon(Icons.library_books),
-                        label: const Text('View All Chapter Resources'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _hexToColor(avengerColor),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
                           ),
-                        ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ChapterResourcesScreen(
+                                      chapter: chapter,
+                                      resourceType: 'All',
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.library_books),
+                              label: const Text('Resources'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _hexToColor(avengerColor).withOpacity(0.7),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   },

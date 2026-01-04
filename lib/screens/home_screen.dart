@@ -4,6 +4,7 @@ import '../services/data_service.dart';
 import '../widgets/subject_card.dart';
 import 'subject_detail_screen_v2.dart';
 import 'roadmap_screen.dart';
+import 'roadmap_navigation_screen.dart';
 import '../utils/constants.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -293,12 +294,12 @@ class HomeScreen extends StatelessWidget {
                   // Avengers Roadmap Card
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: GestureDetector(
+                      child: GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const RoadmapScreen(),
+                            builder: (context) => const RoadmapNavigationScreen(),
                           ),
                         );
                       },

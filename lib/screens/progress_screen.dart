@@ -3,6 +3,7 @@ import '../services/data_service.dart';
 import '../services/usage_tracker_service.dart';
 import '../utils/icon_helper.dart';
 import 'roadmap_screen.dart';
+import 'roadmap_navigation_screen.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -348,7 +349,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const RoadmapScreen(),
+                      builder: (context) => const RoadmapNavigationScreen(),
                     ),
                   );
                 },

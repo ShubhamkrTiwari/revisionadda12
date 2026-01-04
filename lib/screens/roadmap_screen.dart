@@ -5,6 +5,7 @@ import '../models/roadmap_item.dart';
 import '../models/subject.dart';
 import 'subject_detail_screen_v2.dart';
 import 'chapter_concepts_screen.dart';
+import 'mindmap_screen.dart';
 
 class RoadmapScreen extends StatefulWidget {
   final String? subjectId;
@@ -400,16 +401,40 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
                           ],
                         ),
                       ),
-                      // Arrow
-                      Icon(
-                        isLocked
-                            ? Icons.lock_outline
-                            : Icons.arrow_forward_ios,
-                        color: isLocked
-                            ? Colors.grey
-                            : color,
-                        size: 20,
-                      ),
+                      // Action Buttons
+                      if (!isLocked)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.account_tree, size: 18),
+                              color: color,
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => MindMapScreen(
+                                      subjectId: item.subjectId,
+                                      chapterId: item.chapterId,
+                                    ),
+                                  ),
+                                );
+                              },
+                              tooltip: 'View Mind Map',
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              color: color,
+                              size: 20,
+                            ),
+                          ],
+                        )
+                      else
+                        Icon(
+                          Icons.lock_outline,
+                          color: Colors.grey,
+                          size: 20,
+                        ),
                     ],
                   ),
                 ),
