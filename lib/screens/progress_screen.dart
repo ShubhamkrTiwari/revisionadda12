@@ -1,9 +1,50 @@
 import 'package:flutter/material.dart';
 import '../services/data_service.dart';
+import '../services/usage_tracker_service.dart';
 import '../utils/icon_helper.dart';
 
-class ProgressScreen extends StatelessWidget {
+class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
+
+  @override
+  State<ProgressScreen> createState() => _ProgressScreenState();
+}
+
+class _ProgressScreenState extends State<ProgressScreen> {
+  final UsageTrackerService _usageTracker = UsageTrackerService();
+  int _totalTime = 0;
+  int _todayTime = 0;
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadUsageTime();
+    // Update time every 5 seconds while on this screen
+    _startTimer();
+  }
+
+  void _startTimer() {
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted) {
+        _loadUsageTime();
+        _startTimer();
+      }
+    });
+  }
+
+  Future<void> _loadUsageTime() async {
+    final total = await _usageTracker.getTotalTime();
+    final today = await _usageTracker.getTodayTime();
+    final currentSession = _usageTracker.getCurrentSessionTime();
+    if (mounted) {
+      setState(() {
+        // Total time includes all completed sessions (not current session)
+        _totalTime = total;
+        // Today's time includes completed sessions today + current active session
+        _todayTime = today + currentSession;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -218,6 +259,88 @@ class ProgressScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
+              // App Usage Time Card
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      const Color(0xFF10B981),
+                      const Color(0xFF059669),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF10B981).withOpacity(0.4),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(28),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title with icon
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.25),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.access_time,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'App Usage Time',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      // Time Stats
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTimeStatCard(
+                              icon: Icons.today,
+                              iconColor: Colors.white,
+                              value: UsageTrackerService.formatTime(_todayTime),
+                              label: 'Today',
+                              color: Colors.white.withOpacity(0.25),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildTimeStatCard(
+                              icon: Icons.history,
+                              iconColor: Colors.white,
+                              value: UsageTrackerService.formatTime(_totalTime),
+                              label: 'Total',
+                              color: Colors.white.withOpacity(0.25),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
               // Subjects Section
               Row(
                 children: [
@@ -315,6 +438,49 @@ class ProgressScreen extends StatelessWidget {
             label,
             style: const TextStyle(
               fontSize: 12,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeStatCard({
+    required IconData icon,
+    required Color iconColor,
+    required String value,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.3),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: iconColor, size: 28),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
               color: Colors.white,
               fontWeight: FontWeight.w500,
             ),
