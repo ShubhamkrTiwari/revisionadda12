@@ -107,6 +107,12 @@ class _AvengerGameScreenState extends State<AvengerGameScreen> {
           );
         }
       });
+      
+      // Automatically proceed to next level if available
+      if (_currentLevelIndex < _game!.levels.length - 1) {
+        // Immediately proceed to next level
+        _nextLevel();
+      }
     }
   }
 

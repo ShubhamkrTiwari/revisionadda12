@@ -39,7 +39,10 @@ class AvengerGameService {
     final practiceQuestions = aiContent['practiceQuestions'] as List;
     
     int questionIndex = 0;
-    final Set<String> usedQuestionIds = {}; // Track used questions to avoid repetition
+    final Set<String> usedQuestionIds = {}; // Track used question IDs
+    final Set<String> usedQuestionTexts = {}; // Track used question texts to avoid duplicates
+    final Map<String, int> conceptUsageCount = {}; // Track how many times each concept is used
+    final Map<String, int> formulaUsageCount = {}; // Track how many times each formula is used
     
     // Create 50 levels
     for (int levelNum = 1; levelNum <= 50; levelNum++) {
@@ -52,68 +55,103 @@ class AvengerGameService {
       for (int q = 0; q < questionsPerLevel; q++) {
         AvengerGameQuestion? question;
         int attempts = 0;
+        final int uniqueSeed = levelNum * 1000 + questionIndex * 100 + q * 10 + DateTime.now().millisecondsSinceEpoch % 1000;
         
         // Try to generate unique questions
-        while (question == null && attempts < 10) {
-          final questionType = (questionIndex + levelNum + q) % 4;
+        while (question == null && attempts < 20) {
+          // Use more randomization for question type selection
+          final questionType = (uniqueSeed + attempts * 7) % 4;
           
           if (questionType == 0 && concepts.isNotEmpty) {
-            // Concept questions - vary based on level
-            final conceptIndex = (questionIndex + levelNum * 3) % concepts.length;
+            // Concept questions - vary based on level and ensure distribution
+            final conceptIndex = (uniqueSeed + levelNum * 3 + q * 5) % concepts.length;
             final concept = concepts[conceptIndex];
-            final avenger = RoadmapService.getChapterAvenger((chapterIndex + questionIndex + levelNum * 5) % 50);
+            final conceptKey = concept['title']?.toString() ?? conceptIndex.toString();
+            conceptUsageCount[conceptKey] = (conceptUsageCount[conceptKey] ?? 0) + 1;
+            
+            // Skip if this concept has been used too many times
+            if ((conceptUsageCount[conceptKey] ?? 0) > 3 && attempts < 15) {
+              attempts++;
+              continue;
+            }
+            
+            final avenger = RoadmapService.getChapterAvenger((chapterIndex + uniqueSeed + levelNum * 5) % 50);
             question = _generateQuestionFromConcept(
               concept,
               avenger,
-              questionIndex + levelNum * 100 + q,
+              uniqueSeed,
               subject.name,
               chapter.name,
               levelNum,
             );
           } else if (questionType == 1 && formulas.isNotEmpty) {
-            // Formula questions
-            final formulaIndex = (questionIndex + levelNum * 2) % formulas.length;
+            // Formula questions - ensure variety
+            final formulaIndex = (uniqueSeed + levelNum * 2 + q * 3) % formulas.length;
             final formula = formulas[formulaIndex];
-            final avenger = RoadmapService.getChapterAvenger((chapterIndex + questionIndex + levelNum * 7) % 50);
+            final formulaKey = formula['formula']?.toString() ?? formulaIndex.toString();
+            formulaUsageCount[formulaKey] = (formulaUsageCount[formulaKey] ?? 0) + 1;
+            
+            // Skip if this formula has been used too many times
+            if ((formulaUsageCount[formulaKey] ?? 0) > 3 && attempts < 15) {
+              attempts++;
+              continue;
+            }
+            
+            final avenger = RoadmapService.getChapterAvenger((chapterIndex + uniqueSeed + levelNum * 7) % 50);
             question = _generateQuestionFromFormula(
               formula,
               avenger,
-              questionIndex + levelNum * 100 + q,
+              uniqueSeed,
               subject.name,
               levelNum,
             );
           } else if (questionType == 2 && practiceQuestions.isNotEmpty) {
-            // Practice question based
-            final practiceIndex = (questionIndex + levelNum * 4) % practiceQuestions.length;
+            // Practice question based - ensure variety
+            final practiceIndex = (uniqueSeed + levelNum * 4 + q * 7) % practiceQuestions.length;
             final practiceQ = practiceQuestions[practiceIndex];
-            final avenger = RoadmapService.getChapterAvenger((chapterIndex + questionIndex + levelNum * 11) % 50);
+            final avenger = RoadmapService.getChapterAvenger((chapterIndex + uniqueSeed + levelNum * 11) % 50);
             question = _generateQuestionFromPractice(
               practiceQ,
               avenger,
-              questionIndex + levelNum * 100 + q,
+              uniqueSeed,
               subject.name,
               chapter.name,
               levelNum,
             );
           } else {
-            // General and advanced questions
-            final avenger = RoadmapService.getChapterAvenger((chapterIndex + questionIndex + levelNum * 13) % 50);
+            // General and advanced questions - always unique
+            final avenger = RoadmapService.getChapterAvenger((chapterIndex + uniqueSeed + levelNum * 13) % 50);
             question = _generateAdvancedQuestion(
               chapter,
               subject,
               avenger,
-              questionIndex + levelNum * 100 + q,
+              uniqueSeed,
               levelNum,
               studyTips,
             );
           }
           
-          // Check if question is unique
-          if (question != null && usedQuestionIds.contains(question.id)) {
-            question = null;
-            attempts++;
-          } else if (question != null) {
+          // Check if question is unique by both ID and text
+          if (question != null) {
+            final questionTextHash = question.question.toLowerCase().trim();
+            
+            // Check if question text is duplicate
+            if (usedQuestionTexts.contains(questionTextHash)) {
+              question = null;
+              attempts++;
+              continue;
+            }
+            
+            // Check if question ID is duplicate
+            if (usedQuestionIds.contains(question.id)) {
+              question = null;
+              attempts++;
+              continue;
+            }
+            
+            // Question is unique - add to tracking sets
             usedQuestionIds.add(question.id);
+            usedQuestionTexts.add(questionTextHash);
             break;
           }
           
@@ -124,6 +162,27 @@ class AvengerGameService {
           levelQuestions.add(question);
           allQuestions.add(question);
           questionIndex++;
+        } else {
+          // If we couldn't generate a unique question, create a fallback unique question
+          final avenger = RoadmapService.getChapterAvenger((chapterIndex + uniqueSeed) % 50);
+          question = _generateAdvancedQuestion(
+            chapter,
+            subject,
+            avenger,
+            uniqueSeed + 99999,
+            levelNum,
+            studyTips,
+          );
+          if (question != null) {
+            final questionTextHash = question.question.toLowerCase().trim();
+            if (!usedQuestionTexts.contains(questionTextHash) && !usedQuestionIds.contains(question.id)) {
+              usedQuestionIds.add(question.id);
+              usedQuestionTexts.add(questionTextHash);
+              levelQuestions.add(question);
+              allQuestions.add(question);
+              questionIndex++;
+            }
+          }
         }
       }
       
@@ -235,46 +294,70 @@ class AvengerGameService {
         correctAnswer = 0;
         explanation = 'This question tests your understanding of $chapter concepts.';
       } else {
-        // Generate question from chapter description
-        final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(2).toList();
-        question = 'What is an important aspect of $chapter?';
+        // Generate question from chapter description with variation
+        final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(3).toList();
+        final questionVariations = [
+          'What is an important aspect of $chapter?',
+          'Which concept is crucial in $chapter?',
+          'What key principle applies to $chapter?',
+          'What fundamental idea is central to $chapter?',
+        ];
+        final variationIndex = (index + levelNum) % questionVariations.length;
+        question = questionVariations[variationIndex];
         options = [
           keywords.isNotEmpty ? keywords[0].trim() : 'Fundamental principles',
           keywords.length > 1 ? keywords[1].trim() : 'Core concepts',
-          'Unrelated topic',
-          'Basic definition'
+          keywords.length > 2 ? keywords[2].trim() : 'Advanced topics',
+          'Unrelated topic'
         ];
         correctAnswer = 0;
         explanation = 'This chapter covers important concepts in ${subject.toLowerCase()}.';
       }
     } else if (levelNum <= 30) {
-      // Intermediate level - application questions
-      final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(2).toList();
-      question = 'How can you apply concepts from $chapter in real-world scenarios?';
+      // Intermediate level - application questions with variation
+      final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(3).toList();
+      final questionVariations = [
+        'How can you apply concepts from $chapter in real-world scenarios?',
+        'In what practical situations does $chapter knowledge help?',
+        'Where can you use $chapter principles effectively?',
+        'How does $chapter apply to everyday problems?',
+      ];
+      final variationIndex = (index + levelNum) % questionVariations.length;
+      question = questionVariations[variationIndex];
       options = [
         keywords.isNotEmpty ? 'Through ${keywords[0].trim().toLowerCase()} applications' : 'Through practical applications',
-        'Only in theoretical problems',
-        'Not applicable in real life',
+        keywords.length > 1 ? 'Using ${keywords[1].trim().toLowerCase()} methods' : 'Only in theoretical problems',
+        keywords.length > 2 ? 'Applying ${keywords[2].trim().toLowerCase()}' : 'Not applicable in real life',
         'Only in laboratory settings'
       ];
       correctAnswer = 0;
       explanation = 'Understanding practical applications helps master $chapter concepts.';
     } else {
-      // Advanced level - deeper understanding
-      final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(2).toList();
-      question = 'What advanced understanding is required for $chapter?';
+      // Advanced level - deeper understanding with variation
+      final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(3).toList();
+      final questionVariations = [
+        'What advanced understanding is required for $chapter?',
+        'What deep knowledge is essential for mastering $chapter?',
+        'Which advanced concepts are crucial in $chapter?',
+        'What expertise level is needed for $chapter?',
+      ];
+      final variationIndex = (index + levelNum) % questionVariations.length;
+      question = questionVariations[variationIndex];
       options = [
         keywords.isNotEmpty ? 'Deep knowledge of ${keywords[0].trim().toLowerCase()}' : 'Advanced conceptual understanding',
-        'Basic memorization',
-        'Simple definitions',
+        keywords.length > 1 ? 'Expertise in ${keywords[1].trim().toLowerCase()}' : 'Basic memorization',
+        keywords.length > 2 ? 'Mastery of ${keywords[2].trim().toLowerCase()}' : 'Simple definitions',
         'Surface-level knowledge'
       ];
       correctAnswer = 0;
       explanation = 'Advanced levels require deep understanding of $chapter principles.';
     }
     
+    // Create unique ID with timestamp and multiple factors
+    final uniqueId = 'practice_${index}_${levelNum}_${question.hashCode}_${DateTime.now().millisecondsSinceEpoch % 100000}';
+    
     return AvengerGameQuestion(
-      id: 'practice_${index}_${levelNum}',
+      id: uniqueId,
       question: question,
       options: options,
       correctAnswer: correctAnswer,
@@ -349,9 +432,16 @@ class AvengerGameService {
         correctAnswer = 0;
         explanation = 'Faraday\'s law states that an electromotive force (EMF) is induced in a circuit when the magnetic flux through it changes.';
       } else {
-        // Generate question from chapter description keywords
+        // Generate question from chapter description keywords with variation
         final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(3).toList();
-        question = 'What is a key concept in $chapter?';
+        final questionVariations = [
+          'What is a key concept in $chapter?',
+          'Which principle is fundamental in $chapter?',
+          'What important idea is central to $chapter?',
+          'What core concept defines $chapter?',
+        ];
+        final variationIndex = (index + levelNum) % questionVariations.length;
+        question = questionVariations[variationIndex];
         options = [
           keywords.isNotEmpty ? keywords[0].trim() : (description.isNotEmpty ? description.substring(0, description.length > 50 ? 50 : description.length) : 'Fundamental principle of $chapter'),
           keywords.length > 1 ? keywords[1].trim() : 'Secondary concept',
@@ -395,9 +485,16 @@ class AvengerGameService {
         correctAnswer = 0;
         explanation = 'A function is a relation where each input (domain) has exactly one output (range).';
       } else {
-        // Generate question from chapter description keywords
+        // Generate question from chapter description keywords with variation
         final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(3).toList();
-        question = 'What is a key concept in $chapter?';
+        final questionVariations = [
+          'What is a key concept in $chapter?',
+          'Which principle is fundamental in $chapter?',
+          'What important idea is central to $chapter?',
+          'What core concept defines $chapter?',
+        ];
+        final variationIndex = (index + levelNum) % questionVariations.length;
+        question = questionVariations[variationIndex];
         options = [
           keywords.isNotEmpty ? keywords[0].trim() : (description.isNotEmpty ? description.substring(0, description.length > 50 ? 50 : description.length) : 'Fundamental principle of $chapter'),
           keywords.length > 1 ? keywords[1].trim() : 'Secondary concept',
@@ -451,9 +548,16 @@ class AvengerGameService {
         correctAnswer = 0;
         explanation = 'A crystal lattice is a regular, repeating arrangement of atoms, ions, or molecules in a solid.';
       } else {
-        // Generate question from chapter description keywords
+        // Generate question from chapter description keywords with variation
         final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(3).toList();
-        question = 'What is a key concept in $chapter?';
+        final questionVariations = [
+          'What is a key concept in $chapter?',
+          'Which principle is fundamental in $chapter?',
+          'What important idea is central to $chapter?',
+          'What core concept defines $chapter?',
+        ];
+        final variationIndex = (index + levelNum) % questionVariations.length;
+        question = questionVariations[variationIndex];
         options = [
           keywords.isNotEmpty ? keywords[0].trim() : (description.isNotEmpty ? description.substring(0, description.length > 50 ? 50 : description.length) : 'Fundamental principle of $chapter'),
           keywords.length > 1 ? keywords[1].trim() : 'Secondary concept',
@@ -507,9 +611,16 @@ class AvengerGameService {
         correctAnswer = 0;
         explanation = 'The cell is the basic structural and functional unit of all living organisms.';
       } else {
-        // Generate question from chapter description keywords
+        // Generate question from chapter description keywords with variation
         final keywords = chapterDesc.split(',').where((k) => k.trim().isNotEmpty).take(3).toList();
-        question = 'What is a key concept in $chapter?';
+        final questionVariations = [
+          'What is a key concept in $chapter?',
+          'Which principle is fundamental in $chapter?',
+          'What important idea is central to $chapter?',
+          'What core concept defines $chapter?',
+        ];
+        final variationIndex = (index + levelNum) % questionVariations.length;
+        question = questionVariations[variationIndex];
         options = [
           keywords.isNotEmpty ? keywords[0].trim() : (description.isNotEmpty ? description.substring(0, description.length > 50 ? 50 : description.length) : 'Fundamental principle of $chapter'),
           keywords.length > 1 ? keywords[1].trim() : 'Secondary concept',
@@ -520,9 +631,16 @@ class AvengerGameService {
         explanation = description.isNotEmpty ? description : (chapterDesc.isNotEmpty ? chapterDesc : 'This is an important concept in $chapter.');
       }
     }
-    // Default for any other subject
+    // Default for any other subject with variation
     else {
-      question = 'What is the main concept of $title in $chapter?';
+      final questionVariations = [
+        'What is the main concept of $title in $chapter?',
+        'Which principle does $title represent in $chapter?',
+        'What important idea does $title convey in $chapter?',
+        'What core concept is $title in $chapter?',
+      ];
+      final variationIndex = (index + levelNum) % questionVariations.length;
+      question = questionVariations[variationIndex];
       options = [
         description.isNotEmpty ? description.substring(0, description.length > 50 ? 50 : description.length) : 'Key principle of $chapter',
         'Secondary concept',
@@ -533,8 +651,11 @@ class AvengerGameService {
       explanation = description.isNotEmpty ? description : 'This is an important concept in $chapter.';
     }
 
+    // Create unique ID with timestamp and multiple factors
+    final uniqueId = 'concept_${index}_${levelNum}_${title.hashCode}_${question.hashCode}_${DateTime.now().millisecondsSinceEpoch % 100000}';
+    
     return AvengerGameQuestion(
-      id: 'concept_${index}_${levelNum}_${title.hashCode}',
+      id: uniqueId,
       question: question,
       options: options,
       correctAnswer: correctAnswer,
@@ -817,8 +938,11 @@ class AvengerGameService {
       explanation = description.isNotEmpty ? description : (chapterDesc.isNotEmpty ? chapterDesc : 'This is an important concept in $chapterName.');
     }
 
+    // Create unique ID with timestamp and multiple factors
+    final uniqueId = 'formula_${index}_${levelNum}_${formulaText.hashCode}_${question.hashCode}_${DateTime.now().millisecondsSinceEpoch % 100000}';
+    
     return AvengerGameQuestion(
-      id: 'formula_${index}_${levelNum}_${formulaText.hashCode}',
+      id: uniqueId,
       question: question,
       options: options,
       correctAnswer: correctAnswer,
@@ -954,8 +1078,11 @@ class AvengerGameService {
       explanation = 'Mastery of ${chapter.name} comes from regular practice, consistent revision, and solving various types of ${subject.name.toLowerCase()} problems.';
     }
 
+    // Create unique ID with timestamp and multiple factors
+    final uniqueId = 'advanced_${index}_${levelNum}_${chapter.name.hashCode}_${question.hashCode}_${DateTime.now().millisecondsSinceEpoch % 100000}';
+    
     return AvengerGameQuestion(
-      id: 'advanced_${index}_${levelNum}_${chapter.name.hashCode}',
+      id: uniqueId,
       question: question,
       options: options,
       correctAnswer: correctAnswer,
