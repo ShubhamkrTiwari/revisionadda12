@@ -5,10 +5,37 @@ import '../widgets/subject_card.dart';
 import 'subject_detail_screen_v2.dart';
 import 'roadmap_screen.dart';
 import 'roadmap_navigation_screen.dart';
+import 'notes_screen.dart';
+import '../services/notes_service.dart';
+import '../models/note.dart';
 import '../utils/constants.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final NotesService _notesService = NotesService.instance;
+  List<Note> _recentNotes = [];
+  List<Note> _upcomingReminders = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotes();
+  }
+
+  Future<void> _loadNotes() async {
+    final notes = await _notesService.getNotes();
+    final reminders = await _notesService.getReminders();
+    setState(() {
+      _recentNotes = notes.take(3).toList();
+      _upcomingReminders = reminders.take(2).toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -224,6 +251,9 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 24),
+                // Notes Section
+                _buildNotesSection(context),
                 const SizedBox(height: 24),
                 // Quick Stats Row
                 Row(
@@ -463,6 +493,119 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNotesSection(BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const NotesScreen()),
+        );
+        _loadNotes();
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.3),
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.note_alt,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'My Notes',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const Spacer(),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white.withOpacity(0.8),
+                  size: 16,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_upcomingReminders.isNotEmpty) ...[
+              ..._upcomingReminders.map((reminder) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.notifications_active,
+                          color: Colors.white.withOpacity(0.9),
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            reminder.title,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.95),
+                              fontSize: 13,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+              if (_recentNotes.isNotEmpty) const SizedBox(height: 8),
+            ],
+            if (_recentNotes.isNotEmpty)
+              ..._recentNotes.map((note) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.note,
+                          color: Colors.white.withOpacity(0.9),
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            note.title,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.95),
+                              fontSize: 13,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+            if (_recentNotes.isEmpty && _upcomingReminders.isEmpty)
+              Text(
+                'Tap to add your first note',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.8),
+                  fontSize: 13,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
