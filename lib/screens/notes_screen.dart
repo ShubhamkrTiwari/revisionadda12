@@ -322,6 +322,20 @@ class _NotesScreenState extends State<NotesScreen> {
                   return;
                 }
 
+                if (isReminder && selectedReminderDate == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please select a reminder date and time')),
+                  );
+                  return;
+                }
+
+                if (isReminder && selectedReminderDate != null && selectedReminderDate!.isBefore(DateTime.now())) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Reminder date must be in the future')),
+                  );
+                  return;
+                }
+
                 final newNote = Note(
                   id: note?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
                   title: titleController.text.trim(),
@@ -331,13 +345,20 @@ class _NotesScreenState extends State<NotesScreen> {
                   isReminder: isReminder,
                 );
 
-                await _notesService.saveNote(newNote);
+                final saved = await _notesService.saveNote(newNote);
                 _loadNotes();
                 if (mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(note == null ? 'Note added' : 'Note updated'),
+                      content: Text(
+                        saved 
+                          ? (isReminder 
+                              ? 'Note saved with reminder set!' 
+                              : (note == null ? 'Note added' : 'Note updated'))
+                          : 'Error saving note'
+                      ),
+                      backgroundColor: saved ? Colors.green : Colors.red,
                     ),
                   );
                 }

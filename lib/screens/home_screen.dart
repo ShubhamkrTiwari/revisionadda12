@@ -6,6 +6,7 @@ import 'subject_detail_screen_v2.dart';
 import 'roadmap_screen.dart';
 import 'roadmap_navigation_screen.dart';
 import 'notes_screen.dart';
+import 'ai_chat_screen.dart';
 import '../services/notes_service.dart';
 import '../models/note.dart';
 import '../utils/constants.dart';
@@ -150,6 +151,31 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
           ),
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AIChatScreen(),
+                  ),
+                );
+              },
+              tooltip: 'AI Chat Assistant',
+            ),
+          ),
         ],
       ),
       body: Column(
@@ -157,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // Header Section with Gradient
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(24, 32, 24, 40),
+            padding: EdgeInsets.fromLTRB(24, MediaQuery.of(context).padding.top + 8, 24, 20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -184,22 +210,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.25),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.2),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
                       child: const Icon(
                         Icons.school,
                         color: Colors.white,
-                        size: 32,
+                        size: 28,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -215,34 +241,34 @@ class _HomeScreenState extends State<HomeScreen> {
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                       letterSpacing: 1,
-                                      fontSize: 26,
+                                      fontSize: 22,
                                     ),
                               ),
                               const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withOpacity(0.25),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Text(
                                   'CBSE',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 14,
+                                    fontSize: 12,
                                     letterSpacing: 1,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 4),
                           Text(
                             'Select a subject to start your revision journey',
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   color: Colors.white.withOpacity(0.95),
-                                  fontSize: 15,
+                                  fontSize: 13,
                                   letterSpacing: 0.3,
                                 ),
                           ),
@@ -251,10 +277,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 // Notes Section
                 _buildNotesSection(context),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 // Quick Stats Row
                 Row(
                   children: [
@@ -302,20 +328,20 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
                     child: Row(
                       children: [
                         Icon(
                           Icons.subject,
                           color: Theme.of(context).colorScheme.primary,
-                          size: 24,
+                          size: 22,
                         ),
                         const SizedBox(width: 8),
                         Text(
                           'Subjects',
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 22,
+                                fontSize: 20,
                               ),
                         ),
                       ],
@@ -324,7 +350,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   // Avengers Roadmap Card
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: GestureDetector(
+                    child: GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
@@ -334,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       },
                       child: Container(
-                        margin: const EdgeInsets.only(bottom: 16),
+                        margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
@@ -344,57 +370,60 @@ class _HomeScreenState extends State<HomeScreen> {
                               const Color(0xFFED1C24),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(18),
                           boxShadow: [
                             BoxShadow(
                               color: const Color(0xFFC41E3A).withOpacity(0.4),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
+                              blurRadius: 15,
+                              offset: const Offset(0, 6),
                             ),
                           ],
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.all(20),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           child: Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(12),
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withOpacity(0.25),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Text(
                                   '🦸',
-                                  style: TextStyle(fontSize: 36),
+                                  style: TextStyle(fontSize: 28),
                                 ),
                               ),
-                              const SizedBox(width: 16),
+                              const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     const Text(
                                       'AVENGERS ROADMAP',
                                       style: TextStyle(
-                                        fontSize: 20,
+                                        fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
-                                        letterSpacing: 1.5,
+                                        letterSpacing: 1.2,
                                       ),
                                     ),
-                                    const SizedBox(height: 6),
+                                    const SizedBox(height: 4),
                                     Text(
-                                      'Complete your learning journey with Marvel heroes',
+                                      'Complete your learning journey',
                                       style: TextStyle(
-                                        fontSize: 13,
+                                        fontSize: 12,
                                         color: Colors.white.withOpacity(0.9),
                                       ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withOpacity(0.25),
                                   shape: BoxShape.circle,
@@ -402,7 +431,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: const Icon(
                                   Icons.arrow_forward,
                                   color: Colors.white,
-                                  size: 24,
+                                  size: 20,
                                 ),
                               ),
                             ],
@@ -413,34 +442,37 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   Expanded(
                     child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       itemCount: subjects.length,
                       itemBuilder: (context, index) {
-                        return TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0.0, end: 1.0),
-                          duration: Duration(milliseconds: 300 + (index * 100)),
-                          curve: Curves.easeOut,
-                          builder: (context, value, child) {
-                            return Transform.translate(
-                              offset: Offset(0, 20 * (1 - value)),
-                              child: Opacity(
-                                opacity: value,
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: SubjectCard(
-                            subject: subjects[index],
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => SubjectDetailScreenV2(
-                                    subject: subjects[index],
-                                  ),
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            duration: Duration(milliseconds: 300 + (index * 100)),
+                            curve: Curves.easeOut,
+                            builder: (context, value, child) {
+                              return Transform.translate(
+                                offset: Offset(0, 20 * (1 - value)),
+                                child: Opacity(
+                                  opacity: value,
+                                  child: child,
                                 ),
                               );
                             },
+                            child: SubjectCard(
+                              subject: subjects[index],
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SubjectDetailScreenV2(
+                                      subject: subjects[index],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         );
                       },
@@ -452,6 +484,23 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AIChatScreen(),
+            ),
+          );
+        },
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        icon: const Icon(Icons.smart_toy, color: Colors.white),
+        label: const Text(
+          'AI Assistant',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        tooltip: 'Chat with AI Assistant',
+      ),
     );
   }
 
@@ -462,24 +511,25 @@ class _HomeScreenState extends State<HomeScreen> {
     required BuildContext context,
   }) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: Colors.white.withOpacity(0.3),
           width: 1.5,
         ),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white, size: 24),
-          const SizedBox(height: 6),
+          Icon(icon, color: Colors.white, size: 20),
+          const SizedBox(height: 4),
           Text(
             value,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -488,9 +538,10 @@ class _HomeScreenState extends State<HomeScreen> {
             label,
             style: TextStyle(
               color: Colors.white.withOpacity(0.9),
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.w500,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -498,6 +549,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildNotesSection(BuildContext context) {
+    final hasContent = _upcomingReminders.isNotEmpty || _recentNotes.isNotEmpty;
+    final totalItems = (_upcomingReminders.length + _recentNotes.length).clamp(0, 2);
+    
     return GestureDetector(
       onTap: () async {
         await Navigator.push(
@@ -507,103 +561,104 @@ class _HomeScreenState extends State<HomeScreen> {
         _loadNotes();
       },
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: Colors.white.withOpacity(0.3),
             width: 1.5,
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.note_alt,
-                  color: Colors.white,
-                  size: 24,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'My Notes',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const Spacer(),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.white.withOpacity(0.8),
-                  size: 16,
-                ),
-              ],
+            Icon(
+              Icons.note_alt,
+              color: Colors.white,
+              size: 20,
             ),
-            const SizedBox(height: 12),
-            if (_upcomingReminders.isNotEmpty) ...[
-              ..._upcomingReminders.map((reminder) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.notifications_active,
-                          color: Colors.white.withOpacity(0.9),
-                          size: 16,
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'My Notes',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            reminder.title,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.95),
-                              fontSize: 13,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                  ),
+                  if (hasContent && totalItems > 0) ...[
+                    const SizedBox(height: 4),
+                    ...(_upcomingReminders.take(1).map((reminder) => Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.notifications_active,
+                                color: Colors.white.withOpacity(0.9),
+                                size: 12,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  reminder.title,
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.95),
+                                    fontSize: 11,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                  )),
-              if (_recentNotes.isNotEmpty) const SizedBox(height: 8),
-            ],
-            if (_recentNotes.isNotEmpty)
-              ..._recentNotes.map((note) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.note,
-                          color: Colors.white.withOpacity(0.9),
-                          size: 16,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            note.title,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.95),
-                              fontSize: 13,
+                        ))),
+                    if (_recentNotes.isNotEmpty && _upcomingReminders.isEmpty)
+                      ...(_recentNotes.take(1).map((note) => Padding(
+                            padding: const EdgeInsets.only(bottom: 2),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.note,
+                                  color: Colors.white.withOpacity(0.9),
+                                  size: 12,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    note.title,
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.95),
+                                      fontSize: 11,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+                          ))),
+                  ] else if (!hasContent)
+                    Text(
+                      'Tap to add note',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 11,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
-                  )),
-            if (_recentNotes.isEmpty && _upcomingReminders.isEmpty)
-              Text(
-                'Tap to add your first note',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
-                  fontSize: 13,
-                  fontStyle: FontStyle.italic,
-                ),
+                ],
               ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.white.withOpacity(0.8),
+              size: 14,
+            ),
           ],
         ),
       ),

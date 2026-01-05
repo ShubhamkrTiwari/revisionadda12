@@ -3,6 +3,7 @@ import 'home_screen.dart';
 import 'progress_screen.dart';
 import 'game_screen.dart';
 import 'settings_screen.dart';
+import 'ai_chat_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final Function(ThemeMode)? onThemeModeChanged;
@@ -25,6 +26,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       const HomeScreen(),
       const ProgressScreen(),
       const GameScreen(),
+      const AIChatScreen(),
       SettingsScreen(onThemeModeChanged: widget.onThemeModeChanged),
     ]);
   }
@@ -72,6 +74,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.play_circle_outline),
               label: 'Game',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.smart_toy),
+              label: 'AI Chat',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.settings),

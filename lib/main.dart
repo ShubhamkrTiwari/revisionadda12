@@ -3,6 +3,7 @@ import 'screens/splash_screen.dart';
 import 'theme/app_theme.dart';
 import 'utils/constants.dart';
 import 'services/usage_tracker_service.dart';
+import 'services/notification_service.dart';
 
 void main() {
   runApp(const RevisionAddaApp());
@@ -24,6 +25,8 @@ class _RevisionAddaAppState extends State<RevisionAddaApp> {
     super.initState();
     // Initialize usage tracker
     _usageTracker.initialize();
+    // Initialize notification service
+    NotificationService().initialize();
   }
 
   @override
