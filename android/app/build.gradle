@@ -61,6 +61,8 @@ android {
             signingConfig signingConfigs.debug
             minifyEnabled false
             shrinkResources false
+            // Disable R8 to reduce memory usage
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
