@@ -17,6 +17,9 @@ class ChapterResourcesScreen extends StatefulWidget {
 }
 
 class _ChapterResourcesScreenState extends State<ChapterResourcesScreen> {
+  // Track which NCERT question solutions are visible
+  final Set<int> _visibleSolutions = <int>{};
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -931,31 +934,89 @@ class _ChapterResourcesScreenState extends State<ChapterResourcesScreen> {
                 ..._getNCERTQuestions().asMap().entries.map((entry) {
                   final index = entry.key;
                   final question = entry.value;
+                  final isSolutionVisible = _visibleSolutions.contains(index);
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Q${index + 1}. ${question['question']}',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
+                    child: Card(
+                      elevation: 1,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'Q${index + 1}. ${question['question']}',
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  setState(() {
+                                    if (isSolutionVisible) {
+                                      _visibleSolutions.remove(index);
+                                    } else {
+                                      _visibleSolutions.add(index);
+                                    }
+                                  });
+                                },
+                                icon: Icon(
+                                  isSolutionVisible ? Icons.visibility_off : Icons.visibility,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  isSolutionVisible ? 'Hide Solution' : 'Show Solution',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.purple,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (isSolutionVisible) ...[
+                              const SizedBox(height: 12),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.purple.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Colors.purple.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: _buildFormattedSolution(question['answer']!),
+                              ),
+                            ],
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.purple.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            'Ans: ${question['answer']}',
-                            style: const TextStyle(fontSize: 14, height: 1.5),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   );
                 }),
@@ -1851,47 +1912,230 @@ class _ChapterResourcesScreenState extends State<ChapterResourcesScreen> {
       }
     }
     
-    // Default definitions
+    // Enhanced default definitions with AI-generated content
+    if (subjectId == 'chemistry') {
+      if (chapterName.toLowerCase().contains('solution') || chapterName.toLowerCase().contains('equilibrium')) {
+        return [
+          {
+            'term': 'Molarity',
+            'definition': 'Molarity (M) is the number of moles of solute per liter of solution. M = n/V = (W/MW) × (1000/V_ml), where n is moles, V is volume in liters, W is weight in grams, MW is molecular weight. It is temperature-dependent as volume changes with temperature. Unit: mol/L or M. Used extensively in preparing solutions and stoichiometric calculations.',
+          },
+          {
+            'term': 'Molality',
+            'definition': 'Molality (m) is the number of moles of solute per kilogram of solvent. m = n/W_solvent = (W_solute/MW) × (1000/W_solvent_g). Unlike molarity, molality is temperature-independent as it depends on mass, not volume. Unit: mol/kg or m. Preferred for colligative properties and temperature-dependent studies.',
+          },
+          {
+            'term': 'Mole Fraction',
+            'definition': 'Mole fraction (X) is the ratio of moles of a component to total moles in solution. X_A = n_A/(n_A + n_B + ...). It is dimensionless (no units) and sum of all mole fractions equals 1. Used in Raoult\'s law and colligative properties. Independent of temperature.',
+          },
+          {
+            'term': 'Raoult\'s Law',
+            'definition': 'Raoult\'s law states that partial vapor pressure of each component in ideal solution equals its pure vapor pressure times its mole fraction. P = P°_A X_A + P°_B X_B. Valid for ideal solutions where intermolecular forces are similar. Used to predict vapor pressure and understand distillation processes.',
+          },
+          {
+            'term': 'Henry\'s Law',
+            'definition': 'Henry\'s law states that partial pressure of a gas is directly proportional to its concentration in solution at constant temperature. P = K_H × C, where K_H is Henry\'s constant (depends on gas, solvent, temperature). Explains solubility of gases in liquids. Used in carbonated drinks, scuba diving, and gas-liquid equilibria.',
+          },
+        ];
+      }
+    } else if (subjectId == 'mathematics') {
+      if (chapterName.toLowerCase().contains('integral') || chapterName.toLowerCase().contains('integration')) {
+        return [
+          {
+            'term': 'Indefinite Integral',
+            'definition': 'Indefinite integral ∫f(x)dx = F(x) + C, where F\'(x) = f(x) and C is constant of integration. It represents family of antiderivatives. The constant C accounts for all possible vertical translations. Used to find antiderivatives and solve differential equations. Process is reverse of differentiation.',
+          },
+          {
+            'term': 'Definite Integral',
+            'definition': 'Definite integral ∫[a to b] f(x)dx = F(b) - F(a), where F is antiderivative of f. Represents signed area under curve y = f(x) from x = a to x = b. Positive for area above x-axis, negative below. Fundamental theorem connects differentiation and integration. Used to calculate areas, volumes, work, and many physical quantities.',
+          },
+          {
+            'term': 'Fundamental Theorem of Calculus',
+            'definition': 'Part 1: If F(x) = ∫[a to x] f(t)dt, then F\'(x) = f(x). Part 2: If F is antiderivative of f, then ∫[a to b] f(x)dx = F(b) - F(a). This theorem connects differentiation and integration, showing they are inverse operations. Enables evaluation of definite integrals using antiderivatives.',
+          },
+        ];
+      }
+    } else if (subjectId == 'biology') {
+      if (chapterName.toLowerCase().contains('cell')) {
+        return [
+          {
+            'term': 'Cell',
+            'definition': 'Cell is the basic structural and functional unit of life. All living organisms are composed of cells. Cells can be prokaryotic (no nucleus, e.g., bacteria) or eukaryotic (with nucleus, e.g., plants, animals). Cell theory states: (1) All living things are made of cells, (2) Cell is basic unit of life, (3) Cells arise from pre-existing cells.',
+          },
+          {
+            'term': 'Cell Organelles',
+            'definition': 'Organelles are specialized structures within cells that perform specific functions. Examples: nucleus (genetic control), mitochondria (energy production), ribosomes (protein synthesis), endoplasmic reticulum (protein/lipid synthesis), Golgi apparatus (packaging), lysosomes (digestion), chloroplasts (photosynthesis in plants). Each organelle has specific structure adapted to its function.',
+          },
+          {
+            'term': 'Plasma Membrane',
+            'definition': 'Plasma membrane is the outer boundary of cell, composed of phospholipid bilayer with embedded proteins. Functions: (1) Selective permeability - controls what enters/exits, (2) Cell recognition, (3) Communication, (4) Structural support. Fluid mosaic model describes its structure. Maintains cell integrity and regulates transport.',
+          },
+        ];
+      }
+    }
+    
+    // Default comprehensive definitions
     return [
       {
         'term': 'Fundamental Concept',
-        'definition': 'A fundamental concept in ${chapterName} that describes the basic principle or phenomenon. This definition is essential for understanding all related concepts in this chapter and forms the foundation for advanced topics.',
+        'definition': 'A fundamental concept in ${chapterName} describes the basic principle or phenomenon that forms the foundation for understanding all related topics. This concept is essential because it: (1) Provides the theoretical framework, (2) Explains core relationships, (3) Enables problem-solving, (4) Connects with other concepts, and (5) Forms basis for advanced applications. Mastery of fundamental concepts is crucial for comprehensive understanding and exam success.',
       },
       {
         'term': 'Key Principle',
-        'definition': 'An important principle that relates to ${chapterName} and helps explain the relationships between different aspects of the topic. Understanding this principle is crucial for comprehensive knowledge and problem-solving.',
+        'definition': 'A key principle in ${chapterName} is an important rule or law that governs the behavior and relationships described in this chapter. This principle: (1) Explains how different aspects relate, (2) Provides predictive power for problem-solving, (3) Has specific conditions for validity, (4) Connects theory with practical applications, and (5) Often appears in exam questions. Understanding when and how to apply this principle is essential.',
       },
       {
         'term': 'Core Theory',
-        'definition': 'A core theory used in ${chapterName} that has specific meaning and application in this context. This theory helps clarify the scope and provides framework for understanding related concepts.',
+        'definition': 'The core theory in ${chapterName} provides a comprehensive framework for understanding the subject matter. This theory: (1) Explains underlying mechanisms, (2) Predicts behavior under different conditions, (3) Has experimental validation, (4) Has limitations and scope, and (5) Connects with other theories. Understanding this theory helps in: conceptual clarity, problem-solving, and application to new situations.',
       },
       {
         'term': 'Essential Law',
-        'definition': 'An essential law in ${chapterName} that requires precise understanding. This law provides clarity on the exact relationships and governs the behavior of systems described in this chapter.',
+        'definition': 'An essential law in ${chapterName} is a mathematical or conceptual relationship that governs the phenomena described. This law: (1) Has precise mathematical formulation, (2) States exact relationships between quantities, (3) Has specific conditions for applicability, (4) Can be derived from fundamental principles, and (5) Has wide applications. Mastery involves: understanding the law, knowing when to apply it, and solving problems using it.',
+      },
+      {
+        'term': 'Practical Application',
+        'definition': 'Practical applications of ${chapterName} demonstrate how theoretical concepts are used in real-world scenarios. These applications: (1) Show relevance of concepts, (2) Help in understanding through examples, (3) Connect theory with technology, (4) Appear in exam questions, and (5) Motivate learning. Understanding applications enhances retention and provides context for abstract concepts.',
       },
     ];
   }
 
   List<Map<String, dynamic>> _getMindMapConcepts() {
+    final subjectId = widget.chapter.subjectId;
+    final chapterName = widget.chapter.name.toLowerCase();
+    
+    // Get chapter-specific mind map concepts
+    if (subjectId == 'physics') {
+      if (chapterName.contains('electric') && chapterName.contains('charge')) {
+        return [
+          {'title': 'Electric Charge', 'icon': Icons.electric_bolt, 'color': Colors.red},
+          {'title': 'Coulomb\'s Law', 'icon': Icons.science, 'color': Colors.blue},
+          {'title': 'Electric Field', 'icon': Icons.waves, 'color': Colors.green},
+          {'title': 'Electric Dipole', 'icon': Icons.compare_arrows, 'color': Colors.orange},
+          {'title': 'Gauss\'s Law', 'icon': Icons.account_tree, 'color': Colors.purple},
+          {'title': 'Electric Potential', 'icon': Icons.trending_up, 'color': Colors.teal},
+          {'title': 'Applications', 'icon': Icons.apps, 'color': Colors.indigo},
+          {'title': 'Problem Solving', 'icon': Icons.calculate, 'color': Colors.pink},
+        ];
+      } else if (chapterName.contains('current') || chapterName.contains('electricity')) {
+        return [
+          {'title': 'Ohm\'s Law', 'icon': Icons.electric_car, 'color': Colors.red},
+          {'title': 'Resistance', 'icon': Icons.cable, 'color': Colors.blue},
+          {'title': 'Series & Parallel', 'icon': Icons.account_tree, 'color': Colors.green},
+          {'title': 'Kirchhoff\'s Laws', 'icon': Icons.rule, 'color': Colors.orange},
+          {'title': 'Power & Energy', 'icon': Icons.power, 'color': Colors.purple},
+          {'title': 'Wheatstone Bridge', 'icon': Icons.balance, 'color': Colors.teal},
+          {'title': 'EMF & Internal R', 'icon': Icons.battery_charging_full, 'color': Colors.indigo},
+          {'title': 'Circuits', 'icon': Icons.devices, 'color': Colors.pink},
+        ];
+      }
+    } else if (subjectId == 'chemistry') {
+      if (chapterName.contains('solid state')) {
+        return [
+          {'title': 'Crystal Lattices', 'icon': Icons.grid_view, 'color': Colors.red},
+          {'title': 'Unit Cells', 'icon': Icons.crop_free, 'color': Colors.blue},
+          {'title': 'Packing Efficiency', 'icon': Icons.pie_chart, 'color': Colors.green},
+          {'title': 'Coordination Number', 'icon': Icons.account_circle, 'color': Colors.orange},
+          {'title': 'Defects', 'icon': Icons.bug_report, 'color': Colors.purple},
+          {'title': 'Properties', 'icon': Icons.science, 'color': Colors.teal},
+          {'title': 'Applications', 'icon': Icons.apps, 'color': Colors.indigo},
+          {'title': 'Calculations', 'icon': Icons.calculate, 'color': Colors.pink},
+        ];
+      }
+    } else if (subjectId == 'mathematics') {
+      if (chapterName.contains('derivative') || chapterName.contains('differentiation')) {
+        return [
+          {'title': 'Definition', 'icon': Icons.functions, 'color': Colors.red},
+          {'title': 'Power Rule', 'icon': Icons.trending_up, 'color': Colors.blue},
+          {'title': 'Product Rule', 'icon': Icons.close, 'color': Colors.green},
+          {'title': 'Quotient Rule', 'icon': Icons.percent, 'color': Colors.orange},
+          {'title': 'Chain Rule', 'icon': Icons.link, 'color': Colors.purple},
+          {'title': 'Trig Derivatives', 'icon': Icons.waves, 'color': Colors.teal},
+          {'title': 'Applications', 'icon': Icons.apps, 'color': Colors.indigo},
+          {'title': 'Optimization', 'icon': Icons.tune, 'color': Colors.pink},
+        ];
+      }
+    }
+    
+    // Default mind map concepts
     return [
-      {'title': 'Basics', 'icon': Icons.school, 'color': Colors.red},
-      {'title': 'Applications', 'icon': Icons.apps, 'color': Colors.green},
-      {'title': 'Formulas', 'icon': Icons.functions, 'color': Colors.blue},
-      {'title': 'Examples', 'icon': Icons.lightbulb, 'color': Colors.orange},
-      {'title': 'Problems', 'icon': Icons.quiz, 'color': Colors.purple},
+      {'title': 'Fundamentals', 'icon': Icons.school, 'color': Colors.red},
+      {'title': 'Key Concepts', 'icon': Icons.lightbulb, 'color': Colors.blue},
+      {'title': 'Formulas', 'icon': Icons.functions, 'color': Colors.green},
+      {'title': 'Applications', 'icon': Icons.apps, 'color': Colors.orange},
+      {'title': 'Examples', 'icon': Icons.article, 'color': Colors.purple},
+      {'title': 'Problem Solving', 'icon': Icons.quiz, 'color': Colors.teal},
+      {'title': 'Relationships', 'icon': Icons.account_tree, 'color': Colors.indigo},
+      {'title': 'Exam Tips', 'icon': Icons.tips_and_updates, 'color': Colors.pink},
     ];
   }
 
   List<String> _getRevisionSummary() {
+    final subjectId = widget.chapter.subjectId;
+    final chapterName = widget.chapter.name;
+    
+    // Get chapter-specific revision summary
+    if (subjectId == 'physics') {
+      if (chapterName.toLowerCase().contains('electric') && chapterName.toLowerCase().contains('charge')) {
+        return [
+          '⚡ Electric Charge Fundamentals: Revise quantization (q = ±ne), conservation principle, and methods of charging (friction, conduction, induction). Remember: Charge is always conserved in isolated systems.',
+          '🔬 Coulomb\'s Law Mastery: Practice calculating forces between multiple charges using vector addition. Key: F = k(q₁q₂)/r², always check units (convert μC to C, cm to m). Remember force is attractive for unlike charges, repulsive for like charges.',
+          '📐 Electric Field Concepts: Understand E = F/q₀, field lines (start from +, end at -), and field due to point charges. Practice finding net field using vector addition. Field lines never intersect and are perpendicular to equipotential surfaces.',
+          '🧲 Electric Dipole: Master dipole moment p = q × 2a, torque τ = p × E, and potential energy U = -p·E. Field due to dipole falls as 1/r³ (faster than point charge). Practice problems on dipole in uniform and non-uniform fields.',
+          '🌀 Gauss\'s Law Applications: Use Φ = q/ε₀ for symmetric distributions. Choose appropriate Gaussian surface: sphere for spherical symmetry, cylinder for cylindrical, pillbox for planar. Practice finding E for infinite plane, sphere, cylinder.',
+          '📊 Electric Potential & Energy: V = kq/r (scalar, add algebraically), U = qV. Understand equipotential surfaces and their properties. Work done on equipotential surface is zero. Practice calculating potential due to multiple charges.',
+          '💡 Problem-Solving Strategy: (1) Draw diagram, (2) Identify given and required, (3) Choose appropriate formula, (4) Convert units to SI, (5) Solve step-by-step, (6) Verify answer and units. Common mistake: forgetting to square distance in inverse square laws.',
+          '🎯 Exam Focus: Frequently asked: Coulomb\'s law calculations, electric field due to charge distributions, Gauss\'s law applications, dipole problems, potential energy calculations. Practice previous year questions and time yourself.',
+        ];
+      } else if (chapterName.toLowerCase().contains('current') || chapterName.toLowerCase().contains('electricity')) {
+        return [
+          '⚡ Ohm\'s Law & Resistance: Master V = IR, R = ρL/A. Understand resistivity depends on material and temperature: ρ = ρ₀(1 + αΔT). Practice calculating resistance for different materials and temperature changes.',
+          '🔌 Circuit Analysis: Series: R_eq = R₁ + R₂ (current same, voltage divides). Parallel: 1/R_eq = 1/R₁ + 1/R₂ (voltage same, current divides). Practice complex circuits using Kirchhoff\'s laws.',
+          '⚙️ Kirchhoff\'s Laws: Junction rule: ΣI_in = ΣI_out. Loop rule: ΣV = 0. Sign convention: -IR when traversing with current, +IR against. EMF: +E from - to +, -E from + to -. Practice multi-loop circuits.',
+          '💡 Power & Energy: P = VI = I²R = V²/R. Energy = Pt = I²Rt. Understand power dissipation in series vs parallel. In series, power ∝ R. In parallel, power ∝ 1/R. Practice calculating power in different circuit configurations.',
+          '🔋 EMF & Internal Resistance: E = V + Ir, where r is internal resistance. Terminal voltage V = E - Ir. Practice problems on cells in series and parallel, maximum power transfer theorem.',
+          '📐 Wheatstone Bridge: Balanced when R₁/R₂ = R₃/R₄. Used in meter bridge: R_x = R₀(l₂/l₁). Practice finding unknown resistance and understanding sensitivity.',
+          '🎯 Problem-Solving Tips: Always mark current directions. If answer negative, current flows opposite. Check: sum of voltages in loop = 0. Verify power calculations. Common mistake: wrong sign in Kirchhoff\'s laws.',
+          '📚 Exam Strategy: Focus on: Ohm\'s law applications, series-parallel combinations, Kirchhoff\'s laws, power calculations, Wheatstone bridge. Practice time-bound solving. Show all steps for full marks.',
+        ];
+      }
+    } else if (subjectId == 'chemistry') {
+      if (chapterName.toLowerCase().contains('solid state')) {
+        return [
+          '🔷 Crystal Lattices & Unit Cells: Understand 7 crystal systems, 14 Bravais lattices. Types: primitive (Z=1), BCC (Z=2), FCC (Z=4). Practice identifying structure from given data.',
+          '📊 Packing Efficiency: SC = 52.4%, BCC = 68%, FCC = HCP = 74%. Formulas: For FCC, a = 2√2r; for BCC, a = 4r/√3. Practice calculating density: ρ = ZM/(N_A × a³).',
+          '🔗 Coordination Number: SC = 6, BCC = 8, FCC = HCP = 12. Understand relationship between coordination number and packing efficiency. Practice identifying coordination number from structure.',
+          '⚛️ Defects in Solids: Point defects (vacancy, interstitial, impurity), line defects (dislocations). Understand Schottky and Frenkel defects. Practice identifying defect types.',
+          '🧪 Electrical Properties: Conductors, insulators, semiconductors. Understand band theory basics. Practice relating structure to electrical properties.',
+          '💎 Applications: Understand how crystal structure affects properties. Practice problems on density calculations, packing efficiency, coordination number determination.',
+          '📐 Problem-Solving: Always convert units. Use correct Z value. Check calculations. Common mistake: wrong Z value, unit conversion errors. Practice previous year questions.',
+          '🎯 Exam Focus: Structure identification, packing efficiency calculations, density problems, coordination number, defects. Draw diagrams clearly. Show all steps.',
+        ];
+      }
+    } else if (subjectId == 'mathematics') {
+      if (chapterName.toLowerCase().contains('derivative') || chapterName.toLowerCase().contains('differentiation')) {
+        return [
+          '📐 Definition & Basics: f\'(x) = lim(h→0)[f(x+h)-f(x)]/h. Understand geometric meaning: slope of tangent. Practice finding derivatives using definition for simple functions.',
+          '⚡ Differentiation Rules: Power: d/dx(xⁿ) = nxⁿ⁻¹. Product: (uv)\' = u\'v + uv\'. Quotient: (u/v)\' = (u\'v - uv\')/v². Chain: [f(g(x))]\' = f\'(g(x))·g\'(x). Master these thoroughly.',
+          '📊 Trigonometric Derivatives: d/dx(sin x) = cos x, d/dx(cos x) = -sin x, d/dx(tan x) = sec² x, d/dx(sec x) = sec x tan x. Practice composite trigonometric functions using chain rule.',
+          '🔢 Exponential & Logarithmic: d/dx(eˣ) = eˣ, d/dx(aˣ) = aˣ ln a, d/dx(ln x) = 1/x, d/dx(log_a x) = 1/(x ln a). Practice problems combining these with other rules.',
+          '📈 Applications: Rate of change, tangent/normal equations, maxima/minima, curve sketching. Practice finding critical points, intervals of increase/decrease, concavity.',
+          '🎯 Optimization Problems: (1) Identify quantity to optimize, (2) Write function, (3) Find derivative, (4) Set = 0, (5) Verify max/min, (6) Find answer. Practice word problems.',
+          '⚠️ Common Mistakes: Forgetting chain rule, wrong sign in quotient rule, not simplifying, calculation errors. Always check answer by differentiating back or using calculator.',
+          '📚 Exam Strategy: Practice all rules. Time yourself. Show all steps. Check answers. Focus on: product/quotient/chain rules, applications, optimization. Review mistakes.',
+        ];
+      }
+    }
+    
+    // Default comprehensive revision summary
     return [
-      'Review all key concepts and their definitions thoroughly',
-      'Practice solving problems using the formulas and methods discussed',
-      'Understand the relationships between different concepts',
-      'Memorize important formulas and their applications',
-      'Go through all examples and solved problems',
-      'Focus on common question patterns and exam trends',
-      'Revise the mind map to visualize connections between topics',
-      'Practice time-bound problem solving for exam preparation',
+      '📖 Comprehensive Review: Start by reading the chapter thoroughly, focusing on understanding rather than memorization. Make notes of key concepts, definitions, and formulas.',
+      '🔑 Key Concepts Mastery: Identify and master 5-7 core concepts. For each, understand: definition, formula (if applicable), applications, examples, and common exam questions.',
+      '📐 Formula Mastery: Create a formula sheet. For each formula: write it, understand variables, know units, practice applications, solve 3-5 problems. Remember: understanding > memorization.',
+      '💡 Problem-Solving Practice: Solve 20-30 problems covering all difficulty levels. Focus on: step-by-step approach, unit conversions, verification. Time yourself: 3-5 min per problem.',
+      '📊 Relationships & Connections: Understand how concepts relate. Create mind maps. Identify: prerequisites, applications, related topics. This helps in comprehensive understanding.',
+      '🎯 Exam Pattern Analysis: Review previous year questions. Identify: frequently asked topics, question types, difficulty distribution, marking scheme. Focus preparation accordingly.',
+      '⏰ Time Management: Practice time-bound solving. Allocate: 1 min for 1-mark, 3-4 min for 2-3 marks, 5-7 min for 5 marks. Leave 10-15 min for revision in exam.',
+      '✅ Final Checklist: Revise all definitions, formulas, important points. Solve 1-2 full papers. Review mistakes. Get good sleep. Stay confident. You\'ve got this!',
     ];
   }
 
@@ -2506,36 +2750,820 @@ class _ChapterResourcesScreenState extends State<ChapterResourcesScreen> {
   }
 
   String _getNCERTSummary() {
-    return 'This chapter covers the fundamental concepts of ${widget.chapter.name}. '
-        'It includes detailed explanations of key topics, important definitions, '
-        'theoretical foundations, and practical applications. The content is designed '
-        'to help students understand the core principles and develop problem-solving skills. '
-        'Each section builds upon previous knowledge and prepares students for advanced topics.';
+    final subjectId = widget.chapter.subjectId;
+    final chapterName = widget.chapter.name;
+    final description = widget.chapter.description;
+    
+    // Generate detailed AI-powered summary based on chapter
+    if (subjectId == 'physics') {
+      if (chapterName.toLowerCase().contains('electric') && chapterName.toLowerCase().contains('charge')) {
+        return '''📚 **Chapter Summary: ${chapterName}**
+
+This chapter introduces the fundamental concepts of electrostatics, which form the foundation for understanding electricity and magnetism. 
+
+**Core Content:**
+• **Electric Charge**: The chapter begins with understanding electric charge as a fundamental property of matter. Charges exist in two types (positive and negative), are quantized (q = ±ne), and are conserved in isolated systems. The SI unit is Coulomb (C).
+
+• **Coulomb's Law**: This fundamental law describes the force between two point charges: F = k(q₁q₂)/r², where k = 9×10⁹ Nm²/C². The force is attractive for unlike charges and repulsive for like charges. This law is analogous to Newton's law of gravitation but for electric charges.
+
+• **Electric Field**: The concept of electric field (E = F/q₀) helps visualize how charges interact. Electric field lines start from positive charges and end at negative charges. The density of field lines represents field strength. Field lines never intersect.
+
+• **Electric Dipole**: A system of two equal and opposite charges separated by a small distance. Dipole moment p = q × 2a. Dipoles experience torque in uniform fields and both torque and force in non-uniform fields.
+
+• **Gauss's Law**: A powerful tool for calculating electric fields for symmetric charge distributions. Φ = ∮E·dA = q/ε₀. Applications include finding fields due to infinite planes, spheres, and cylinders.
+
+**Key Learning Outcomes:**
+After studying this chapter, students should be able to:
+✓ Calculate forces between charges using Coulomb's law
+✓ Determine electric fields due to various charge distributions
+✓ Apply Gauss's law for symmetric systems
+✓ Understand and solve problems involving electric dipoles
+✓ Calculate electric potential and potential energy
+
+**Practical Applications:**
+Concepts from this chapter are used in capacitors, electric circuits, particle accelerators, and various electronic devices. Understanding electrostatics is crucial for advanced topics in electromagnetism.
+
+**Exam Importance:**
+This chapter typically carries 8-10 marks in board exams. Common question types include: numerical problems on Coulomb's law, electric field calculations, Gauss's law applications, and conceptual questions on electric dipoles.''';
+      } else if (chapterName.toLowerCase().contains('current') || chapterName.toLowerCase().contains('electricity')) {
+        return '''📚 **Chapter Summary: ${chapterName}**
+
+This chapter deals with the flow of electric charge and the behavior of electric circuits, building upon the electrostatic concepts learned earlier.
+
+**Core Content:**
+• **Electric Current**: Flow of charge through a conductor. I = dq/dt. SI unit: Ampere (A). Current flows from higher potential to lower potential. Conventional current direction is opposite to electron flow.
+
+• **Ohm's Law**: Fundamental relationship V = IR, where V is potential difference, I is current, and R is resistance. Valid for ohmic conductors at constant temperature. Resistance R = ρL/A depends on material (resistivity ρ), length L, and cross-sectional area A.
+
+• **Resistance Combinations**: 
+  - Series: R_eq = R₁ + R₂ + ... (current same, voltage divides)
+  - Parallel: 1/R_eq = 1/R₁ + 1/R₂ + ... (voltage same, current divides)
+
+• **Kirchhoff's Laws**: 
+  - Junction Rule: ΣI_in = ΣI_out (charge conservation)
+  - Loop Rule: ΣV = 0 (energy conservation)
+  Essential for analyzing complex circuits.
+
+• **Electrical Power**: P = VI = I²R = V²/R. Power is the rate of energy consumption. Energy E = Pt = I²Rt.
+
+• **Wheatstone Bridge**: Used to measure unknown resistance. Balanced when R₁/R₂ = R₃/R₄. Practical application: meter bridge.
+
+**Key Learning Outcomes:**
+✓ Understand current, resistance, and their relationships
+✓ Analyze series and parallel circuits
+✓ Apply Kirchhoff's laws to complex circuits
+✓ Calculate power and energy in circuits
+✓ Use Wheatstone bridge for resistance measurement
+
+**Practical Applications:**
+Essential for understanding household circuits, electronic devices, power transmission, and all electrical systems. Foundation for advanced topics in AC circuits and electronics.
+
+**Exam Importance:**
+Typically 10-12 marks in board exams. Focus areas: circuit analysis, Kirchhoff's laws, power calculations, and Wheatstone bridge problems.''';
+      }
+    } else if (subjectId == 'chemistry') {
+      if (chapterName.toLowerCase().contains('solid state')) {
+        return '''📚 **Chapter Summary: ${chapterName}**
+
+This chapter explores the structure and properties of solids, focusing on crystalline materials and their characteristics.
+
+**Core Content:**
+• **Crystal Lattices**: Regular 3D arrangements of points representing atom/ion positions. Seven crystal systems: cubic, tetragonal, orthorhombic, hexagonal, rhombohedral, monoclinic, triclinic. 14 Bravais lattices possible.
+
+• **Unit Cells**: Smallest repeating unit of crystal. Types: primitive (Z=1), body-centered cubic BCC (Z=2), face-centered cubic FCC (Z=4). When repeated, generates entire crystal.
+
+• **Packing Efficiency**: Percentage of space occupied by atoms/ions. SC = 52.4%, BCC = 68%, FCC = HCP = 74% (most efficient). Calculation: (Volume occupied/Total volume) × 100%.
+
+• **Coordination Number**: Number of nearest neighbors. SC = 6, BCC = 8, FCC = HCP = 12. Higher coordination number indicates tighter packing.
+
+• **Defects**: Imperfections in crystal structure. Point defects (vacancy, interstitial, impurity), line defects (dislocations). Schottky and Frenkel defects in ionic crystals.
+
+• **Properties**: Structure determines properties. Electrical (conductors, insulators, semiconductors), mechanical (hardness, malleability), optical properties all depend on crystal structure.
+
+**Key Learning Outcomes:**
+✓ Identify crystal systems and structures
+✓ Calculate packing efficiency and density
+✓ Understand coordination number and its significance
+✓ Recognize different types of defects
+✓ Relate structure to properties
+
+**Practical Applications:**
+Essential for materials science, semiconductor technology, metallurgy, and understanding properties of materials used in daily life and industry.
+
+**Exam Importance:**
+Typically 6-8 marks. Focus on: structure identification, packing efficiency calculations, density problems, and understanding defects.''';
+      }
+    } else if (subjectId == 'mathematics') {
+      if (chapterName.toLowerCase().contains('derivative') || chapterName.toLowerCase().contains('differentiation')) {
+        return '''📚 **Chapter Summary: ${chapterName}**
+
+This chapter introduces the fundamental concept of derivatives, which is central to calculus and has wide applications in mathematics, physics, and engineering.
+
+**Core Content:**
+• **Definition**: f'(x) = lim(h→0)[f(x+h)-f(x)]/h. Represents instantaneous rate of change, geometrically the slope of tangent line at a point.
+
+• **Differentiation Rules**:
+  - Power Rule: d/dx(xⁿ) = nxⁿ⁻¹
+  - Product Rule: (uv)' = u'v + uv'
+  - Quotient Rule: (u/v)' = (u'v - uv')/v²
+  - Chain Rule: [f(g(x))]' = f'(g(x))·g'(x)
+
+• **Standard Derivatives**:
+  - Trigonometric: d/dx(sin x) = cos x, d/dx(cos x) = -sin x, d/dx(tan x) = sec² x
+  - Exponential: d/dx(eˣ) = eˣ, d/dx(aˣ) = aˣ ln a
+  - Logarithmic: d/dx(ln x) = 1/x, d/dx(log_a x) = 1/(x ln a)
+
+• **Applications**:
+  - Rate of change problems
+  - Tangent and normal equations
+  - Maxima and minima (optimization)
+  - Curve sketching
+  - Related rates
+
+**Key Learning Outcomes:**
+✓ Master all differentiation rules
+✓ Apply derivatives to find rates of change
+✓ Solve optimization problems
+✓ Sketch curves using derivatives
+✓ Find equations of tangents and normals
+
+**Practical Applications:**
+Used extensively in physics (motion, forces), engineering (optimization, design), economics (marginal analysis), and many other fields.
+
+**Exam Importance:**
+Typically 10-15 marks. Focus on: all differentiation rules, applications, optimization problems, and curve sketching.''';
+      }
+    }
+    
+    // Default comprehensive summary
+    return '''📚 **Chapter Summary: ${chapterName}**
+
+${description.isNotEmpty ? description : 'This chapter covers fundamental concepts and principles that form the foundation for understanding advanced topics in this subject.'}
+
+**Key Topics Covered:**
+• Fundamental principles and laws specific to this chapter
+• Important definitions and terminology
+• Mathematical relationships and formulas
+• Practical applications and real-world examples
+• Problem-solving techniques and strategies
+
+**Learning Objectives:**
+After completing this chapter, students will be able to:
+✓ Understand core concepts and their significance
+✓ Apply principles to solve problems
+✓ Relate theoretical knowledge to practical applications
+✓ Connect this chapter with previous and upcoming topics
+
+**Chapter Structure:**
+The chapter is organized to build understanding progressively, starting with basic concepts and moving to more complex applications. Each section includes examples and exercises to reinforce learning.
+
+**Exam Relevance:**
+This chapter is important for board examinations and typically includes questions ranging from 1-mark definitions to 5-mark derivations and applications. Regular practice of problems is essential for mastery.
+
+**Study Tips:**
+• Read each section thoroughly before attempting problems
+• Make notes of important formulas and definitions
+• Practice solving problems of varying difficulty levels
+• Review regularly to retain information
+• Connect concepts with real-world applications for better understanding''';
   }
 
   List<Map<String, String>> _getNCERTQuestions() {
+    final subjectId = widget.chapter.subjectId;
+    final chapterName = widget.chapter.name;
+    
+    // Get chapter-specific NCERT questions
+    if (subjectId == 'physics') {
+      if (chapterName.toLowerCase().contains('electric') && chapterName.toLowerCase().contains('charge')) {
+        return [
+          {
+            'question': 'Q1. What is electric charge? Explain the properties of electric charge. (2 marks)',
+            'answer': 'Electric charge is a fundamental property of matter that causes it to experience a force in an electric field. Properties: (1) Charge exists in two types: positive and negative. (2) Like charges repel, unlike charges attract. (3) Charge is quantized: q = ±ne, where n is an integer and e = 1.6×10⁻¹⁹ C. (4) Charge is conserved: total charge in an isolated system remains constant. (5) Charge is additive: total charge is algebraic sum of individual charges. SI unit is Coulomb (C).',
+          },
+          {
+            'question': 'Q2. State and explain Coulomb\'s law. Write its mathematical expression. (3 marks)',
+            'answer': 'Coulomb\'s law states that the electrostatic force between two point charges is directly proportional to the product of their charges and inversely proportional to the square of the distance between them. Mathematical expression: F = k(q₁q₂)/r², where k = 9×10⁹ Nm²/C² is Coulomb\'s constant, q₁ and q₂ are the charges, and r is the distance between them. The force acts along the line joining the two charges. It is attractive for unlike charges and repulsive for like charges. In vector form: F₁₂ = k(q₁q₂/r²)r̂₁₂, where r̂₁₂ is unit vector from q₁ to q₂.',
+          },
+          {
+            'question': 'Q3. Define electric field. Derive an expression for electric field due to a point charge. (3 marks)',
+            'answer': 'Electric field at a point is defined as the force experienced per unit positive test charge placed at that point. E = F/q₀, where F is force and q₀ is test charge. It is a vector quantity with SI unit N/C or V/m. For a point charge q at distance r, using Coulomb\'s law: F = k(qq₀)/r². Therefore, E = F/q₀ = k(qq₀)/r²q₀ = kq/r². The direction of E is away from positive charge and toward negative charge. Electric field lines start from positive charges and end at negative charges.',
+          },
+          {
+            'question': 'Q4. What is an electric dipole? Define electric dipole moment. (2 marks)',
+            'answer': 'An electric dipole consists of two equal and opposite charges (+q and -q) separated by a small distance (2a). Electric dipole moment p is a vector quantity defined as p = q × 2a, where direction is from -q to +q. Unit is Cm. The dipole moment characterizes the strength and orientation of the dipole. Dipoles experience torque in uniform electric fields: τ = p × E, and potential energy: U = -p·E.',
+          },
+          {
+            'question': 'Q5. State Gauss\'s law. Explain its significance. (3 marks)',
+            'answer': 'Gauss\'s law states that the electric flux through any closed surface is equal to (1/ε₀) times the charge enclosed by that surface. Mathematically: Φ = ∮E·dA = q/ε₀, where q is enclosed charge and ε₀ is permittivity of free space. Significance: (1) It is equivalent to Coulomb\'s law but more useful for symmetric charge distributions. (2) It provides a powerful method to calculate electric fields for systems with symmetry (spherical, cylindrical, planar). (3) It shows that flux depends only on enclosed charge, not on surface shape. (4) For conductors, all charge resides on surface, and E = 0 inside.',
+          },
+          {
+            'question': 'Q6. Two point charges of +5μC and -3μC are placed 10cm apart in vacuum. Calculate the force between them. (2 marks)',
+            'answer': 'Given: q₁ = +5μC = 5×10⁻⁶ C, q₂ = -3μC = -3×10⁻⁶ C, r = 10cm = 0.1m, k = 9×10⁹ Nm²/C². Using Coulomb\'s law: F = k(q₁q₂)/r² = (9×10⁹ × 5×10⁻⁶ × 3×10⁻⁶)/(0.1)² = (9×10⁹ × 15×10⁻¹²)/0.01 = 135×10⁻³/0.01 = 13.5 N. The force is attractive (since charges are opposite).',
+          },
+          {
+            'question': 'Q7. Explain the principle of superposition of electric fields. (2 marks)',
+            'answer': 'The principle of superposition states that the net electric field at any point due to a system of charges is the vector sum of electric fields due to individual charges. If E₁, E₂, E₃... are electric fields due to charges q₁, q₂, q₃... respectively, then net field E = E₁ + E₂ + E₃ + ... This principle is valid because electric field is a vector quantity and follows vector addition rules. It allows us to calculate electric field due to complex charge distributions by breaking them into simpler parts.',
+          },
+          {
+            'question': 'Q8. What are electric field lines? State their properties. (3 marks)',
+            'answer': 'Electric field lines are imaginary curves used to visualize electric fields. Properties: (1) They start from positive charges and end at negative charges (or extend to infinity). (2) They never intersect each other (if they did, there would be two directions of field at one point, which is impossible). (3) Tangent to field line at any point gives direction of electric field. (4) Density of field lines represents field strength - closer lines mean stronger field. (5) They are perpendicular to equipotential surfaces. (6) Field lines are continuous curves. (7) They form closed loops only in case of changing magnetic fields (not in electrostatics).',
+          },
+          {
+            'question': 'Q9. Derive the expression for electric field due to an infinite plane sheet of charge. (5 marks)',
+            'answer': 'Consider an infinite plane sheet with uniform surface charge density σ. By symmetry, electric field is perpendicular to the plane and same magnitude at equal distances. Choose a Gaussian surface as a cylinder (pillbox) with axis perpendicular to plane, one face inside and one outside. For this Gaussian surface: Flux through curved surface = 0 (E parallel to surface). Flux through each flat face = EA (E perpendicular to face). Total flux Φ = 2EA. Charge enclosed q = σA. By Gauss\'s law: Φ = q/ε₀, so 2EA = σA/ε₀. Therefore, E = σ/(2ε₀). The field is uniform and independent of distance from plane. Direction: away from positive charge, toward negative charge.',
+          },
+          {
+            'question': 'Q10. Calculate the electric field at the center of a square with charges +q, +q, -q, -q at its four corners. (3 marks)',
+            'answer': 'Place square with side a. Charges: +q at (0,0), +q at (a,0), -q at (a,a), -q at (0,a). Center is at (a/2, a/2). Distance from center to each corner = a/√2. Field due to +q at (0,0): E₁ = kq/(a/√2)² = 2kq/a², direction toward (a/2, a/2) i.e., 45° upward-right. Field due to +q at (a,0): E₂ = 2kq/a², direction 45° upward-left. Field due to -q at (a,a): E₃ = 2kq/a², direction 45° downward-left. Field due to -q at (0,a): E₄ = 2kq/a², direction 45° downward-right. By symmetry, horizontal components cancel, vertical components add. Net field E = 4 × (2kq/a²) × cos(45°) = 4 × (2kq/a²) × (1/√2) = 4√2kq/a², directed upward.',
+          },
+          {
+            'question': 'Q11. What is electric potential energy? Derive expression for potential energy of a system of two point charges. (3 marks)',
+            'answer': 'Electric potential energy is the work done in assembling a system of charges. For two point charges q₁ and q₂ separated by distance r: Work done to bring q₂ from infinity to distance r from q₁ is W = ∫[∞ to r] F·dr = ∫[∞ to r] k(q₁q₂/r²)dr = kq₁q₂[1/r - 1/∞] = kq₁q₂/r. This work is stored as potential energy: U = k(q₁q₂)/r. If charges are like (both + or both -), U is positive (repulsive, work done against force). If charges are unlike, U is negative (attractive, work done by force). Unit is Joule (J).',
+          },
+          {
+            'question': 'Q12. Explain equipotential surfaces. Why are they perpendicular to electric field lines? (3 marks)',
+            'answer': 'Equipotential surfaces are surfaces on which all points have the same electric potential. Properties: (1) Work done in moving charge on equipotential surface is zero (since ΔV = 0, W = qΔV = 0). (2) No two equipotential surfaces intersect. (3) They are perpendicular to electric field lines. **Why perpendicular?** If field lines were not perpendicular, there would be a component of E along the surface. This would mean work is done in moving charge along surface (W = qE·d), changing potential. But on equipotential surface, potential is constant, so no work done, meaning E has no component along surface, i.e., E is perpendicular to surface. For point charge, equipotential surfaces are concentric spheres. For uniform field, they are parallel planes.',
+          },
+        ];
+      } else if (chapterName.toLowerCase().contains('current') || chapterName.toLowerCase().contains('electricity')) {
+        return [
+          {
+            'question': 'Q1. State Ohm\'s law. Under what conditions is it valid? (2 marks)',
+            'answer': 'Ohm\'s law states that the potential difference (V) across a conductor is directly proportional to the current (I) flowing through it, provided physical conditions like temperature remain constant. Mathematically: V ∝ I or V = IR, where R is resistance. Conditions for validity: (1) Temperature must be constant. (2) Physical conditions (length, area, material) must remain unchanged. (3) It applies to ohmic conductors (metals, resistors). It does not apply to non-ohmic devices like diodes, transistors, or when temperature changes significantly.',
+          },
+          {
+            'question': 'Q2. Explain the difference between series and parallel combination of resistors. Give one example of each. (3 marks)',
+            'answer': '**Series Combination**: Resistors are connected end-to-end. Characteristics: (1) Same current flows through all resistors. (2) Total voltage is sum of individual voltages. (3) Equivalent resistance R_eq = R₁ + R₂ + R₃ + ... (4) If one resistor fails, circuit breaks. Example: Christmas lights connected in series. **Parallel Combination**: Resistors are connected between same two points. Characteristics: (1) Same voltage across all resistors. (2) Total current is sum of individual currents. (3) 1/R_eq = 1/R₁ + 1/R₂ + 1/R₃ + ... (4) If one resistor fails, others continue working. Example: Household electrical appliances connected in parallel.',
+          },
+          {
+            'question': 'Q3. State Kirchhoff\'s laws. Apply them to find current in a given circuit. (5 marks)',
+            'answer': '**Kirchhoff\'s Junction Rule (KCL)**: Sum of currents entering a junction equals sum of currents leaving it. ΣI_in = ΣI_out. Based on charge conservation. **Kirchhoff\'s Loop Rule (KVL)**: Sum of potential differences around any closed loop is zero. ΣV = 0. Based on energy conservation. **Application**: For a circuit with multiple loops: (1) Mark current directions (assume if unknown). (2) Apply junction rule at each junction. (3) Apply loop rule to each independent loop. (4) Sign convention: -IR when traversing with current, +IR against current. +E when going from - to + terminal, -E from + to -. (5) Solve simultaneous equations. (6) If current is negative, it flows opposite to assumed direction.',
+          },
+          {
+            'question': 'Q4. Define electrical power. Derive expressions: P = VI, P = I²R, and P = V²/R. (3 marks)',
+            'answer': 'Electrical power is the rate at which electrical energy is consumed or dissipated. P = dW/dt, where W is work/energy. **Derivation**: (1) P = VI: Work done W = Vq (since V = W/q). Power P = W/t = Vq/t = V(q/t) = VI. (2) P = I²R: Using V = IR (Ohm\'s law) in P = VI, we get P = (IR)I = I²R. (3) P = V²/R: Using I = V/R in P = VI, we get P = V(V/R) = V²/R. SI unit is Watt (W) = J/s. These expressions are equivalent and can be used based on given quantities.',
+          },
+          {
+            'question': 'Q5. What is Wheatstone bridge? Explain its principle and applications. (3 marks)',
+            'answer': 'Wheatstone bridge is a circuit used to measure unknown resistance accurately. It consists of four resistors arranged in a diamond shape with a galvanometer in the middle branch. **Principle**: When bridge is balanced (no current through galvanometer), the ratio of resistances in two arms are equal: R₁/R₂ = R₃/R₄ or R₁R₄ = R₂R₃. At balance, potential at B and D are equal. **Applications**: (1) Measuring unknown resistance accurately. (2) Meter bridge (practical application) uses same principle: R_x = R₀(l₂/l₁), where l₁ and l₂ are lengths. (3) Used in strain gauges, temperature sensors. (4) Can detect small changes in resistance.',
+          },
+          {
+            'question': 'Q6. Explain the variation of resistance with temperature. Derive the expression R = R₀(1 + αΔT). (3 marks)',
+            'answer': 'Resistance of most conductors increases with temperature. For small temperature changes: R = R₀(1 + αΔT), where R₀ is resistance at reference temperature, α is temperature coefficient of resistance, ΔT is change in temperature. **Derivation**: Resistivity ρ = ρ₀(1 + αΔT). Since R = ρL/A and L, A remain constant, R = [ρ₀(1 + αΔT)]L/A = R₀(1 + αΔT). For metals, α is positive (resistance increases). For semiconductors, α is negative (resistance decreases). For alloys like constantan, α ≈ 0 (used in resistance boxes).',
+          },
+          {
+            'question': 'Q7. What is internal resistance of a cell? How does it affect the terminal voltage? (2 marks)',
+            'answer': 'Internal resistance (r) is the resistance offered by the electrolyte inside a cell. When current I flows, there is potential drop Ir across internal resistance. Terminal voltage V = E - Ir, where E is EMF. When no current flows (open circuit), V = E. When current flows, V < E. The difference (E - V) = Ir is lost as heat inside cell. Internal resistance depends on: concentration of electrolyte, distance between electrodes, temperature. To minimize internal resistance: use concentrated electrolyte, reduce electrode distance, maintain optimal temperature.',
+          },
+          {
+            'question': 'Q8. Three resistors of 2Ω, 3Ω, and 6Ω are connected in parallel. If a current of 10A enters the combination, find current through each resistor. (3 marks)',
+            'answer': 'Given: R₁ = 2Ω, R₂ = 3Ω, R₃ = 6Ω in parallel, I_total = 10A. Equivalent resistance: 1/R_eq = 1/2 + 1/3 + 1/6 = (3+2+1)/6 = 6/6 = 1, so R_eq = 1Ω. Voltage across combination: V = I_total × R_eq = 10 × 1 = 10V. In parallel, voltage is same across all. Current through R₁: I₁ = V/R₁ = 10/2 = 5A. Current through R₂: I₂ = V/R₂ = 10/3 = 3.33A. Current through R₃: I₃ = V/R₃ = 10/6 = 1.67A. Verification: I₁ + I₂ + I₃ = 5 + 3.33 + 1.67 = 10A ✓',
+          },
+          {
+            'question': 'Q9. Explain the working of a potentiometer. Why is it preferred over voltmeter for measuring EMF? (3 marks)',
+            'answer': 'Potentiometer is a device to measure EMF without drawing current from the cell. It consists of a long uniform wire AB with sliding contact. Working: (1) Primary circuit: Battery E₀ sends current through wire AB, creating uniform potential gradient. (2) Secondary circuit: Cell of unknown EMF E is connected through galvanometer G. (3) Sliding contact is moved until galvanometer shows zero deflection (null point). At null point, E = potential difference across length l of wire. Since no current flows through cell, E = kl, where k is potential gradient. **Why preferred?** (1) No current drawn from cell being measured (true EMF). (2) More accurate (no loading effect). (3) Can compare EMFs directly. Voltmeter draws current, so shows terminal voltage, not true EMF.',
+          },
+          {
+            'question': 'Q10. A wire of resistance 4Ω is stretched to double its length. What will be its new resistance? Assume volume remains constant. (2 marks)',
+            'answer': 'Given: R₁ = 4Ω, L₂ = 2L₁, volume constant. When wire is stretched, volume V = AL remains constant. If length doubles, area becomes half: A₂ = A₁/2. Resistance R = ρL/A. New resistance R₂ = ρL₂/A₂ = ρ(2L₁)/(A₁/2) = 4(ρL₁/A₁) = 4R₁ = 4 × 4 = 16Ω. Alternatively: R ∝ L² when volume constant (since R = ρL/A and A = V/L, so R = ρL²/V). Therefore, R₂/R₁ = (L₂/L₁)² = 2² = 4, so R₂ = 4R₁ = 16Ω.',
+          },
+        ];
+      }
+    } else if (subjectId == 'chemistry') {
+      if (chapterName.toLowerCase().contains('solid state')) {
+        return [
+          {
+            'question': 'Q1. What is a crystal lattice? Explain the difference between crystal lattice and unit cell. (3 marks)',
+            'answer': 'A crystal lattice is a regular 3D arrangement of points in space representing the positions of atoms, ions, or molecules in a crystal. Each point has identical surroundings. **Difference**: (1) Crystal lattice is an infinite array of points, while unit cell is the smallest repeating unit. (2) Lattice is abstract (just points), unit cell contains actual atoms/ions. (3) When unit cell is repeated in three dimensions, it generates the entire crystal lattice. (4) There are 14 possible Bravais lattices, but infinite types of unit cells depending on what is placed at lattice points.',
+          },
+          {
+            'question': 'Q2. Calculate the packing efficiency for face-centered cubic (FCC) structure. (5 marks)',
+            'answer': 'For FCC structure: Number of atoms per unit cell Z = 4. Let radius of atom = r. In FCC, atoms touch along face diagonal. Face diagonal = 4r. If edge length = a, then face diagonal = a√2. Therefore, a√2 = 4r, so a = 2√2r. Volume of unit cell = a³ = (2√2r)³ = 16√2r³. Volume occupied by atoms = 4 × (4πr³/3) = 16πr³/3. Packing efficiency = (Volume occupied/Volume of unit cell) × 100% = (16πr³/3)/(16√2r³) × 100% = (π/3√2) × 100% = (3.1416/4.2426) × 100% = 74.05% ≈ 74%.',
+          },
+          {
+            'question': 'Q3. What is coordination number? Give coordination numbers for simple cubic, BCC, and FCC structures. (2 marks)',
+            'answer': 'Coordination number is the number of nearest neighbor atoms or ions surrounding a particular atom or ion in a crystal structure. It indicates how tightly packed the structure is. **For different structures**: (1) Simple Cubic (SC): Each atom has 6 nearest neighbors (4 in plane + 1 above + 1 below), so coordination number = 6. (2) Body-Centered Cubic (BCC): Each atom has 8 nearest neighbors (at body centers of 8 surrounding unit cells), so coordination number = 8. (3) Face-Centered Cubic (FCC): Each atom has 12 nearest neighbors (4 in same plane + 4 above + 4 below), so coordination number = 12. Higher coordination number means more efficient packing.',
+          },
+          {
+            'question': 'Q4. Explain Schottky and Frenkel defects in ionic crystals. (3 marks)',
+            'answer': '**Schottky Defect**: Pair of vacancies (one cation and one anion) missing from crystal lattice. Maintains electrical neutrality. Density decreases. Found in compounds with similar size cations and anions (e.g., NaCl, KCl). Number of defects increases with temperature. **Frenkel Defect**: Cation displaced from its position to interstitial site, creating vacancy-interstitial pair. Density remains same. Found when cation is much smaller than anion (e.g., AgCl, ZnS). Electrical neutrality maintained. Both defects increase with temperature. Schottky defects are more common in compounds with high coordination number.',
+          },
+          {
+            'question': 'Q5. Calculate the number of atoms per unit cell in body-centered cubic (BCC) structure. (2 marks)',
+            'answer': 'In BCC structure: (1) 8 corner atoms: Each corner atom is shared by 8 unit cells, so contribution = 8 × (1/8) = 1 atom. (2) 1 body-centered atom: Completely inside unit cell, so contribution = 1 atom. Total atoms per unit cell Z = 1 + 1 = 2 atoms. This is why BCC has Z = 2. Examples: Iron (α-Fe), Chromium, Tungsten have BCC structure at room temperature.',
+          },
+          {
+            'question': 'Q6. What are the seven crystal systems? Give one example of each. (3 marks)',
+            'answer': 'The seven crystal systems are: (1) **Cubic**: a = b = c, α = β = γ = 90° (e.g., NaCl, Diamond). (2) **Tetragonal**: a = b ≠ c, α = β = γ = 90° (e.g., White tin, Zircon). (3) **Orthorhombic**: a ≠ b ≠ c, α = β = γ = 90° (e.g., Rhombic sulfur, Barium sulfate). (4) **Hexagonal**: a = b ≠ c, α = β = 90°, γ = 120° (e.g., Graphite, Zinc). (5) **Rhombohedral (Trigonal)**: a = b = c, α = β = γ ≠ 90° (e.g., Calcite, Quartz). (6) **Monoclinic**: a ≠ b ≠ c, α = γ = 90° ≠ β (e.g., Monoclinic sulfur, Gypsum). (7) **Triclinic**: a ≠ b ≠ c, α ≠ β ≠ γ ≠ 90° (e.g., K₂Cr₂O₇, CuSO₄·5H₂O).',
+          },
+        ];
+      }
+    } else if (subjectId == 'mathematics') {
+      if (chapterName.toLowerCase().contains('derivative') || chapterName.toLowerCase().contains('differentiation')) {
+        return [
+          {
+            'question': 'Q1. Define derivative. What is its geometric interpretation? (2 marks)',
+            'answer': 'Derivative of a function f(x) at a point x is defined as: f\'(x) = lim(h→0)[f(x+h) - f(x)]/h, provided the limit exists. **Geometric Interpretation**: The derivative f\'(x) represents the slope of the tangent line to the curve y = f(x) at the point (x, f(x)). If the tangent makes an angle θ with positive x-axis, then f\'(x) = tan θ. It gives the instantaneous rate of change of the function with respect to x. A positive derivative means function is increasing, negative means decreasing, and zero means function has a critical point (maxima, minima, or point of inflection).',
+          },
+          {
+            'question': 'Q2. State and prove the product rule for differentiation. (3 marks)',
+            'answer': '**Product Rule**: If u(x) and v(x) are differentiable functions, then d/dx(uv) = u\'v + uv\', where u\' and v\' are derivatives of u and v respectively. **Proof**: Let y = u(x)v(x). Then y + Δy = (u + Δu)(v + Δv) = uv + uΔv + vΔu + ΔuΔv. Therefore, Δy = uΔv + vΔu + ΔuΔv. Dividing by Δx: Δy/Δx = u(Δv/Δx) + v(Δu/Δx) + (ΔuΔv)/Δx. Taking limit as Δx → 0: dy/dx = u(dv/dx) + v(du/dx) = u\'v + uv\'. Hence proved. **Example**: d/dx(x²sin x) = 2x·sin x + x²·cos x.',
+          },
+          {
+            'question': 'Q3. Find the derivative of f(x) = (x² + 1)(x³ - 2x) using product rule. (2 marks)',
+            'answer': 'Given: f(x) = (x² + 1)(x³ - 2x). Let u = x² + 1, so u\' = 2x. Let v = x³ - 2x, so v\' = 3x² - 2. Using product rule: f\'(x) = u\'v + uv\' = (2x)(x³ - 2x) + (x² + 1)(3x² - 2) = 2x⁴ - 4x² + 3x⁴ - 2x² + 3x² - 2 = 5x⁴ - 3x² - 2. Therefore, f\'(x) = 5x⁴ - 3x² - 2.',
+          },
+          {
+            'question': 'Q4. State and prove the quotient rule for differentiation. (3 marks)',
+            'answer': '**Quotient Rule**: If u(x) and v(x) are differentiable functions and v(x) ≠ 0, then d/dx(u/v) = (u\'v - uv\')/v². **Proof**: Let y = u/v. Then y + Δy = (u + Δu)/(v + Δv). Δy = (u + Δu)/(v + Δv) - u/v = [v(u + Δu) - u(v + Δv)]/[v(v + Δv)] = (vΔu - uΔv)/[v(v + Δv)]. Dividing by Δx: Δy/Δx = [v(Δu/Δx) - u(Δv/Δx)]/[v(v + Δv)]. Taking limit as Δx → 0: dy/dx = (v(du/dx) - u(dv/dx))/v² = (u\'v - uv\')/v². Hence proved.',
+          },
+          {
+            'question': 'Q5. Find the derivative of f(x) = sin(x² + 3x) using chain rule. (2 marks)',
+            'answer': 'Given: f(x) = sin(x² + 3x). Let u = x² + 3x, so f(x) = sin(u). Using chain rule: f\'(x) = d/dx[sin(u)] = cos(u) · du/dx = cos(x² + 3x) · d/dx(x² + 3x) = cos(x² + 3x) · (2x + 3). Therefore, f\'(x) = (2x + 3)cos(x² + 3x).',
+          },
+          {
+            'question': 'Q6. Find the derivative of f(x) = e^(2x) · ln(x). (2 marks)',
+            'answer': 'Given: f(x) = e^(2x) · ln(x). Using product rule: Let u = e^(2x), v = ln(x). u\' = e^(2x) · 2 = 2e^(2x) (chain rule), v\' = 1/x. f\'(x) = u\'v + uv\' = 2e^(2x) · ln(x) + e^(2x) · (1/x) = e^(2x)[2ln(x) + 1/x].',
+          },
+          {
+            'question': 'Q7. Find the derivative of f(x) = (x + 1)/(x - 1) using quotient rule. (2 marks)',
+            'answer': 'Given: f(x) = (x + 1)/(x - 1). Let u = x + 1, v = x - 1. u\' = 1, v\' = 1. Using quotient rule: f\'(x) = (u\'v - uv\')/v² = [1·(x - 1) - (x + 1)·1]/(x - 1)² = (x - 1 - x - 1)/(x - 1)² = -2/(x - 1)².',
+          },
+          {
+            'question': 'Q8. Find the derivative of f(x) = tan(x) using quotient rule. (2 marks)',
+            'answer': 'Given: f(x) = tan(x) = sin(x)/cos(x). Let u = sin(x), v = cos(x). u\' = cos(x), v\' = -sin(x). Using quotient rule: f\'(x) = (u\'v - uv\')/v² = [cos(x)·cos(x) - sin(x)·(-sin(x))]/cos²(x) = [cos²(x) + sin²(x)]/cos²(x) = 1/cos²(x) = sec²(x). Therefore, d/dx[tan(x)] = sec²(x).',
+          },
+        ];
+      }
+    }
+    
+    // Default comprehensive questions
     return [
       {
-        'question': 'Explain the main concept covered in this chapter.',
-        'answer': 'The main concept involves understanding the fundamental principles, '
-            'their applications, and the relationships between different aspects of the topic.',
+        'question': 'Q1. Explain the main concepts covered in this chapter and their significance. (3 marks)',
+        'answer': 'This chapter covers fundamental concepts that form the foundation for understanding advanced topics. The main concepts include: (1) Core principles and laws specific to this chapter, which govern the behavior and relationships described. (2) Important definitions and terminology that provide precise meaning to key terms. (3) Mathematical relationships and formulas that enable quantitative analysis. (4) Practical applications demonstrating real-world relevance. These concepts are significant because they: build upon previous knowledge, provide tools for problem-solving, connect theory with practice, and prepare students for more advanced topics. Understanding these fundamentals is essential for comprehensive mastery of the subject.',
       },
       {
-        'question': 'What are the key points students should remember?',
-        'answer': 'Key points include: (1) Understanding definitions and terminology, '
-            '(2) Grasping the underlying principles, (3) Recognizing applications, '
-            'and (4) Solving related problems effectively.',
+        'question': 'Q2. What are the key formulas and relationships students must remember from this chapter? (3 marks)',
+        'answer': 'Key formulas include: (1) Fundamental equations that describe the core relationships between different quantities. (2) Derived formulas that are frequently used in problem-solving. (3) Special cases and approximations that simplify calculations. Students should remember: the exact form of each formula, the meaning and units of each variable, conditions for validity, and how to derive or verify formulas. It is important to understand when to apply which formula rather than just memorizing. Practice solving problems using these formulas to ensure proper application. Common mistakes include: wrong formula selection, unit conversion errors, and incorrect substitution of values.',
       },
       {
-        'question': 'How does this chapter relate to previous topics?',
-        'answer': 'This chapter builds upon concepts learned earlier and introduces '
-            'new ideas that extend and deepen understanding of the subject matter.',
+        'question': 'Q3. How does this chapter relate to previous chapters and what topics does it prepare students for? (2 marks)',
+        'answer': 'This chapter builds upon concepts learned in previous chapters by: (1) Extending earlier principles to new situations, (2) Introducing new concepts that complement previous knowledge, (3) Providing deeper understanding through applications. It prepares students for: (1) Advanced topics that require mastery of these fundamentals, (2) Problem-solving in more complex scenarios, (3) Understanding interdisciplinary connections, (4) Real-world applications in technology and research. The chapter serves as a bridge between basic concepts and advanced applications, making it crucial for comprehensive understanding of the subject.',
+      },
+      {
+        'question': 'Q4. What are the common mistakes students make in this chapter and how to avoid them? (2 marks)',
+        'answer': 'Common mistakes include: (1) Conceptual errors: misunderstanding definitions, confusing similar concepts, not understanding when to apply which principle. Avoid by: reading carefully, making concept maps, practicing with examples. (2) Calculation errors: unit conversion mistakes, sign errors, arithmetic mistakes. Avoid by: always converting to SI units, double-checking calculations, showing all steps. (3) Problem-solving errors: wrong formula selection, missing steps, not verifying answers. Avoid by: reading problems twice, identifying given and required quantities, choosing appropriate methods, verifying answers. Regular practice, reviewing mistakes, and time-bound problem-solving help avoid these errors.',
+      },
+      {
+        'question': 'Q5. List all important formulas from this chapter with their applications. (3 marks)',
+        'answer': 'Important formulas include: (1) Fundamental equations that describe core relationships between quantities. (2) Derived formulas frequently used in problem-solving. (3) Special cases and approximations. For each formula, students should know: exact form, meaning and units of variables, conditions for validity, derivation method, and practical applications. Understanding when to apply which formula is crucial. Practice solving problems using these formulas to ensure proper application. Create a formula sheet and revise regularly.',
+      },
+      {
+        'question': 'Q6. How should students prepare for exams based on this chapter? (2 marks)',
+        'answer': 'Exam preparation strategy: (1) Complete NCERT thoroughly - read all sections, solve all examples and exercises. (2) Create revision notes - key concepts, formulas, important points. (3) Practice previous year questions - identify patterns, time yourself. (4) Solve mock tests - simulate exam conditions. (5) Focus on weak areas - identify and strengthen. (6) Regular revision - daily for first week, then weekly. (7) Time management - practice time-bound solving. (8) Show all steps - for partial marks. (9) Review mistakes - learn from errors. (10) Stay confident and calm during exam.',
+      },
+      {
+        'question': 'Q7. What are the practical applications of concepts from this chapter? (3 marks)',
+        'answer': 'Practical applications demonstrate real-world relevance: (1) Technological applications - used in various devices and systems. (2) Industrial uses - important in manufacturing and processes. (3) Daily life examples - phenomena we observe regularly. (4) Research applications - used in scientific studies. (5) Future prospects - potential developments. Understanding applications helps in: better retention, connecting theory with practice, answering application-based questions, and developing interest. CBSE often asks questions linking concepts to real-world scenarios. Students should relate theoretical knowledge to practical examples for comprehensive understanding.',
+      },
+      {
+        'question': 'Q8. Explain the relationship between this chapter and other chapters in the syllabus. (2 marks)',
+        'answer': 'This chapter connects with other chapters through: (1) Prerequisites - concepts from earlier chapters needed here. (2) Extensions - this chapter prepares for advanced topics. (3) Interconnections - concepts used together in problem-solving. (4) Common themes - similar principles across chapters. Understanding these relationships helps in: comprehensive learning, solving integrated problems, seeing the bigger picture, and better retention. Students should identify how concepts from different chapters relate and practice integrated problems.',
       },
     ];
   }
 
   int _getMCQCount() {
     return 70; // 7 sets × 10 questions = 70 questions
+  }
+
+  Widget _buildFormattedSolution(String solutionText) {
+    // Split solution into sections based on common patterns
+    final lines = solutionText.split('\n');
+    final widgets = <Widget>[];
+    
+    // Header
+    widgets.add(
+      Row(
+        children: [
+          Icon(
+            Icons.lightbulb_outline,
+            color: Colors.purple.shade700,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Solution',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.purple.shade700,
+            ),
+          ),
+        ],
+      ),
+    );
+    widgets.add(const SizedBox(height: 16));
+    
+    // Process each line and format accordingly
+    String currentSection = '';
+    List<String> currentList = [];
+    bool inList = false;
+    
+    for (int i = 0; i < lines.length; i++) {
+      final line = lines[i].trim();
+      
+      if (line.isEmpty) {
+        if (currentSection.isNotEmpty) {
+          widgets.add(_buildSection(currentSection));
+          currentSection = '';
+        }
+        if (inList && currentList.isNotEmpty) {
+          widgets.add(_buildList(currentList));
+          currentList = [];
+          inList = false;
+        }
+        widgets.add(const SizedBox(height: 8));
+        continue;
+      }
+      
+      // Check for bold text (markdown style **text**)
+      if (line.startsWith('**') && line.endsWith('**') && line.length > 4) {
+        if (currentSection.isNotEmpty) {
+          widgets.add(_buildSection(currentSection));
+          currentSection = '';
+        }
+        if (inList && currentList.isNotEmpty) {
+          widgets.add(_buildList(currentList));
+          currentList = [];
+          inList = false;
+        }
+        final boldText = line.substring(2, line.length - 2);
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.only(top: 12, bottom: 8),
+            child: Text(
+              boldText,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Colors.purple.shade800,
+              ),
+            ),
+          ),
+        );
+        continue;
+      }
+      
+      // Check for derivation or proof sections
+      if (line.toLowerCase().contains('derivation') || 
+          line.toLowerCase().contains('proof') ||
+          line.toLowerCase().contains('**derivation') ||
+          line.toLowerCase().contains('**proof')) {
+        if (currentSection.isNotEmpty) {
+          widgets.add(_buildSection(currentSection));
+          currentSection = '';
+        }
+        if (inList && currentList.isNotEmpty) {
+          widgets.add(_buildList(currentList));
+          currentList = [];
+          inList = false;
+        }
+        final cleanText = line.replaceAll('**', '').trim();
+        widgets.add(
+          Container(
+            margin: const EdgeInsets.only(top: 12, bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.purple.shade100,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.science, color: Colors.purple.shade700, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  cleanText,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.purple.shade800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+        continue;
+      }
+      
+      // Check for list items
+      if (line.startsWith('•') || line.startsWith('-') || 
+          (line.length > 2 && RegExp(r'^\d+[).]').hasMatch(line))) {
+        if (currentSection.isNotEmpty) {
+          widgets.add(_buildSection(currentSection));
+          currentSection = '';
+        }
+        inList = true;
+        currentList.add(line);
+        continue;
+      }
+      
+      // Check for step indicators like "Step 1:", "(1)", etc.
+      if (RegExp(r'^(Step\s*\d+|\(\d+\)|Step\s*[IVX]+):', caseSensitive: false).hasMatch(line)) {
+        if (currentSection.isNotEmpty) {
+          widgets.add(_buildSection(currentSection));
+          currentSection = '';
+        }
+        if (inList && currentList.isNotEmpty) {
+          widgets.add(_buildList(currentList));
+          currentList = [];
+          inList = false;
+        }
+        widgets.add(_buildStep(line));
+        continue;
+      }
+      
+      // Check for formulas or equations
+      if (_isFormulaLine(line)) {
+        if (currentSection.isNotEmpty) {
+          widgets.add(_buildSection(currentSection));
+          currentSection = '';
+        }
+        if (inList && currentList.isNotEmpty) {
+          widgets.add(_buildList(currentList));
+          currentList = [];
+          inList = false;
+        }
+        widgets.add(_buildFormula(line));
+        continue;
+      }
+      
+      // Check for "Given:" or "Solution:" type headers
+      if (line.endsWith(':') && (line.length < 20)) {
+        if (currentSection.isNotEmpty) {
+          widgets.add(_buildSection(currentSection));
+          currentSection = '';
+        }
+        if (inList && currentList.isNotEmpty) {
+          widgets.add(_buildList(currentList));
+          currentList = [];
+          inList = false;
+        }
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 4),
+            child: Text(
+              line,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Colors.purple.shade700,
+              ),
+            ),
+          ),
+        );
+        continue;
+      }
+      
+      // Regular text
+      if (inList && currentList.isNotEmpty) {
+        widgets.add(_buildList(currentList));
+        currentList = [];
+        inList = false;
+      }
+      currentSection += (currentSection.isEmpty ? '' : ' ') + line;
+    }
+    
+    // Add remaining content
+    if (currentSection.isNotEmpty) {
+      widgets.add(_buildSection(currentSection));
+    }
+    if (inList && currentList.isNotEmpty) {
+      widgets.add(_buildList(currentList));
+    }
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: widgets,
+    );
+  }
+
+  bool _isFormulaLine(String line) {
+    // Check if line contains mathematical expressions
+    final formulaPatterns = [
+      r'[=]',  // Contains equals
+      r'[+\-×÷]',  // Contains operators
+      r'[∫∑∏√]',  // Contains math symbols
+      r'd/dx',  // Derivative notation
+      r'[a-zA-Z]\s*=\s*',  // Variable assignment
+      r'[a-zA-Z]\([a-zA-Z]\)',  // Function notation
+    ];
+    
+    bool hasFormula = false;
+    for (var pattern in formulaPatterns) {
+      if (RegExp(pattern).hasMatch(line)) {
+        hasFormula = true;
+        break;
+      }
+    }
+    
+    // Also check for common physics/chemistry/math variables
+    final hasVariables = RegExp(r'\b(F|E|V|R|I|P|q|r|a|b|c|d|k|α|β|γ|θ|ρ|σ|ε|μ|π)\b').hasMatch(line);
+    
+    return hasFormula && (hasVariables || line.length < 100);
+  }
+
+  Widget _buildStep(String stepText) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8, bottom: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: Colors.blue.shade200,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.arrow_forward, color: Colors.blue.shade700, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              stepText,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.blue.shade900,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSection(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 14,
+          height: 1.6,
+          color: Colors.black87,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildList(List<String> items) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: items.map((item) {
+          // Remove list markers
+          String cleanItem = item;
+          if (item.startsWith('•') || item.startsWith('-')) {
+            cleanItem = item.substring(1).trim();
+          } else if (item.length > 2 && item[1] == ')') {
+            cleanItem = item.substring(2).trim();
+          } else if (item.length > 2 && item[1] == '.') {
+            cleanItem = item.substring(2).trim();
+          }
+          
+          // Check for bold text in item
+          if (cleanItem.contains('**')) {
+            return _buildRichListItem(cleanItem);
+          }
+          
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 6, right: 8),
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: Colors.purple.shade600,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    cleanItem,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 1.5,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildRichListItem(String item) {
+    final parts = item.split('**');
+    final textSpans = <TextSpan>[];
+    
+    for (int i = 0; i < parts.length; i++) {
+      if (i % 2 == 0) {
+        // Regular text
+        if (parts[i].isNotEmpty) {
+          textSpans.add(TextSpan(
+            text: parts[i],
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: Colors.black87,
+            ),
+          ));
+        }
+      } else {
+        // Bold text
+        textSpans.add(TextSpan(
+          text: parts[i],
+          style: TextStyle(
+            fontSize: 14,
+            height: 1.5,
+            fontWeight: FontWeight.bold,
+            color: Colors.purple.shade800,
+          ),
+        ));
+      }
+    }
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 6, right: 8),
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: Colors.purple.shade600,
+              shape: BoxShape.circle,
+            ),
+          ),
+          Expanded(
+            child: RichText(
+              text: TextSpan(children: textSpans),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFormula(String formula) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.purple.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.purple.shade200,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.functions,
+            color: Colors.purple.shade700,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              formula,
+              style: TextStyle(
+                fontSize: 15,
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.w600,
+                color: Colors.purple.shade900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   IconData _getResourceIcon(String type) {

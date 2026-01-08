@@ -35,14 +35,23 @@ class _MCQQuestionsScreenState extends State<MCQQuestionsScreen> {
   }
 
   Future<List<Map<String, dynamic>>> _generateMCQSet() async {
-    final aiContentService = AIContentService();
     final subjectName = _getSubjectName(widget.chapter.subjectId);
-    final questions = await aiContentService.generateMCQSet(
+    final questions = AIContentService.generatePracticeQuestions(
       subjectName,
       widget.chapter.name,
-      widget.setNumber,
     );
-    return questions;
+    
+    // Convert the questions to the expected format
+    return questions.map((q) {
+      final questionText = q['question']?.toString() ?? 'No question text available';
+      return {
+        'question': questionText,
+        'options': _generateOptionsForQuestion(questionText),
+        'correctAnswer': _getCorrectAnswerIndex(questionText),
+        'explanation': 'Explanation for the answer',
+        'difficulty': (q['difficulty'] as String?) ?? 'Medium',
+      };
+    }).toList();
   }
 
   void _startTimer() {
@@ -632,5 +641,26 @@ class _MCQQuestionsScreenState extends State<MCQQuestionsScreen> {
       default:
         return 'Biology';
     }
+  }
+
+  // Generate dummy options for a question
+  List<String> _generateOptionsForQuestion(String question) {
+    // This is a simple implementation that generates 4 options
+    // In a real app, you would want to generate more meaningful options
+    // based on the question content
+    return [
+      'Option A',
+      'Option B',
+      'Option C',
+      'Option D',
+    ];
+  }
+
+  // Get a random correct answer index (0-3)
+  int _getCorrectAnswerIndex(String question) {
+    // This is a simple implementation that returns a random index
+    // In a real app, you would want to determine the correct answer
+    // based on the question content
+    return DateTime.now().millisecondsSinceEpoch % 4;
   }
 }

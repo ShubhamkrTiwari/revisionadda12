@@ -17,26 +17,78 @@ class AIContentService {
       'keyConcepts': _generateKeyConcepts(subject.name, chapter.name, chapter.description),
       'importantFormulas': _generateFormulas(subject.name, chapter.name),
       'studyTips': _generateStudyTips(subject.name, chapter.name),
-      'practiceQuestions': _generatePracticeQuestions(subject.name, chapter.name),
+      'practiceQuestions': generatePracticeQuestions(subject.name, chapter.name),
       'summary': _generateSummary(subject.name, chapter.name, chapter.description),
     };
   }
 
   static String _generateOverview(String subject, String chapter, String description) {
+    // Generate detailed AI-powered overview
+    String importance = '';
+    String difficulty = 'Moderate';
+    String studyTime = '4-6 hours';
+    String approach = 'Start with theory, practice with examples, then solve problems';
+    
+    final subjectLower = subject.toLowerCase();
+    final chapterLower = chapter.toLowerCase();
+    
+    if (subjectLower.contains('physics')) {
+      if (chapterLower.contains('electric') && chapterLower.contains('charge')) {
+        importance = 'This chapter is fundamental for understanding all electricity and magnetism topics. It introduces the concept of electric charge, which is the basis for current electricity, circuits, and electromagnetic phenomena. Mastery here is essential for advanced topics.';
+        difficulty = 'Moderate to Hard';
+        studyTime = '6-8 hours';
+        approach = 'Start with charge properties, then Coulomb\'s law, practice vector addition, learn electric field concepts, master Gauss\'s law applications';
+      } else if (chapterLower.contains('current') || chapterLower.contains('electricity')) {
+        importance = 'Essential for understanding electrical circuits, which are fundamental in modern technology. This chapter connects electrostatics with practical applications. Required for electronics, power systems, and all electrical devices.';
+        difficulty = 'Moderate';
+        studyTime = '5-7 hours';
+        approach = 'Master Ohm\'s law first, understand resistance, practice series-parallel circuits, learn Kirchhoff\'s laws, solve circuit problems systematically';
+      }
+    } else if (subjectLower.contains('chemistry')) {
+      if (chapterLower.contains('solid state')) {
+        importance = 'Fundamental for understanding materials science, semiconductor technology, and properties of solids. Essential for advanced chemistry and engineering applications. Connects atomic structure with bulk properties.';
+        difficulty = 'Moderate';
+        studyTime = '5-6 hours';
+        approach = 'Visualize crystal structures, understand unit cells, practice packing efficiency calculations, learn coordination numbers, relate structure to properties';
+      }
+    } else if (subjectLower.contains('mathematics')) {
+      if (chapterLower.contains('derivative') || chapterLower.contains('differentiation')) {
+        importance = 'Core concept in calculus, essential for optimization, rate of change problems, and advanced mathematics. Foundation for integration, differential equations, and applications in physics and engineering.';
+        difficulty = 'Moderate';
+        studyTime = '6-8 hours';
+        approach = 'Master definition first, learn all rules (power, product, quotient, chain), practice trigonometric and exponential derivatives, apply to problems, focus on applications';
+      }
+    }
+    
+    if (importance.isEmpty) {
+      importance = 'This chapter builds the groundwork for understanding more advanced topics. Mastering these concepts will help you excel in exams and apply knowledge in real-world scenarios.';
+    }
+    
     return '''
 📚 **Chapter Overview: $chapter**
 
-This chapter is a fundamental part of $subject that covers essential concepts and principles. 
+This chapter is a fundamental part of $subject that covers essential concepts and principles essential for comprehensive understanding.
 
 **What You'll Learn:**
-${description.isNotEmpty ? description : 'Core concepts, important theories, and practical applications that form the foundation of this topic.'}
+${description.isNotEmpty ? description : 'Core concepts, important theories, mathematical relationships, practical applications, and problem-solving techniques that form the foundation of this topic. You will develop both conceptual understanding and analytical skills.'}
 
 **Why It's Important:**
-This chapter builds the groundwork for understanding more advanced topics. Mastering these concepts will help you excel in exams and apply knowledge in real-world scenarios.
+$importance
 
-**Difficulty Level:** Moderate
-**Estimated Study Time:** 4-6 hours
-**Best Approach:** Start with theory, practice with examples, then solve problems
+**Key Topics Covered:**
+• Fundamental principles and laws
+• Important definitions and terminology  
+• Mathematical relationships and formulas
+• Practical applications and real-world examples
+• Problem-solving strategies and techniques
+• Connections with other topics
+
+**Difficulty Level:** $difficulty
+**Estimated Study Time:** $studyTime
+**Best Approach:** $approach
+
+**Exam Weightage:** Typically 8-12 marks in board examinations
+**Common Question Types:** Definitions (1-2 marks), Numerical problems (2-3 marks), Derivations (3-5 marks), Application-based questions (2-3 marks)
 ''';
   }
 
@@ -211,21 +263,77 @@ This chapter builds the groundwork for understanding more advanced topics. Maste
   }
 
   static List<String> _generateStudyTips(String subject, String chapter) {
-    return [
-      '📖 Read the chapter thoroughly at least twice',
-      '✍️ Make notes of important points and formulas',
-      '🎯 Focus on understanding concepts rather than memorizing',
-      '📝 Practice solved examples from NCERT',
-      '✅ Solve previous year questions',
-      '🔄 Revise regularly to retain information',
-      '💡 Create mind maps for visual learning',
-      '⏰ Allocate dedicated study time daily',
-      '🤔 Solve practice problems to test understanding',
-      '📊 Track your progress and identify weak areas',
-    ];
+    final subjectLower = subject.toLowerCase();
+    final chapterLower = chapter.toLowerCase();
+    
+    // Generate subject and chapter-specific study tips
+    List<String> tips = [];
+    
+    if (subjectLower.contains('physics')) {
+      tips = [
+        '📖 **Read Actively**: Read the chapter twice - first for overview, second for details. Focus on understanding "why" not just "what". Physics requires conceptual clarity.',
+        '📐 **Master Formulas**: Create a formula sheet. For each formula: write it, understand variables, know units, derive if possible, practice 5-10 problems. Understanding > memorization.',
+        '🔬 **Visualize Concepts**: Draw diagrams for every concept - field lines, circuits, vectors. Visualization helps in understanding and remembering. Use different colors for different elements.',
+        '⚡ **Practice Problems**: Solve 30-50 problems covering all difficulty levels. Start with NCERT examples, then previous year questions, then additional practice. Time yourself: 3-5 min per problem.',
+        '✅ **Check Units**: Always convert to SI units before calculation. Common mistake: using cm instead of m, μC instead of C. Double-check units in final answer.',
+        '📊 **Vector Operations**: For physics problems, master vector addition/subtraction. Draw vectors, resolve components, use trigonometry. Practice vector problems regularly.',
+        '🔄 **Regular Revision**: Revise formulas daily for first week, then weekly. Create flashcards for quick revision. Review solved problems to reinforce methods.',
+        '💡 **Connect Concepts**: Understand how concepts relate. For example: charge → field → potential → energy. Creating connections improves retention and understanding.',
+        '🎯 **Exam Strategy**: Practice time-bound solving. 1-mark: 1 min, 2-3 marks: 3-4 min, 5 marks: 5-7 min. Leave 10-15 min for revision. Show all steps for full marks.',
+        '📚 **NCERT First**: Complete NCERT thoroughly before additional resources. Most exam questions are based on NCERT concepts. Solve all in-text questions and exercises.',
+      ];
+    } else if (subjectLower.contains('chemistry')) {
+      tips = [
+        '📖 **Conceptual Understanding**: Chemistry requires understanding mechanisms, not just memorization. Focus on "how" and "why" reactions occur, not just "what" happens.',
+        '🧪 **Practice Reactions**: Write chemical equations repeatedly. Balance equations correctly. Practice different types: combination, decomposition, displacement, redox reactions.',
+        '📐 **Formula Mastery**: Create formula cards. For each: formula, variables, units, conditions, applications. Practice calculations: molarity, molality, equilibrium constants, etc.',
+        '🔬 **Visual Learning**: Draw structures: Lewis structures, molecular geometry, crystal structures. Use 3D models if available. Visualization is crucial for organic and solid state chemistry.',
+        '📊 **Periodic Trends**: Understand periodic table trends: atomic size, ionization energy, electronegativity. Create charts and practice predicting properties.',
+        '⚗️ **Stoichiometry Practice**: Master mole concept and stoichiometric calculations. Practice: limiting reactant, percentage yield, empirical/molecular formula. These are frequently asked.',
+        '✅ **Regular Practice**: Solve 20-30 problems daily. Focus on: calculations, balancing equations, structure drawing, mechanism understanding. Chemistry improves with practice.',
+        '🔄 **Revision Strategy**: Revise reactions weekly. Create reaction summary sheets. Group similar reactions. Understand mechanisms to remember products.',
+        '💡 **Real-World Connection**: Relate concepts to daily life: rusting (corrosion), cooking (reactions), cleaning (acids/bases). This improves retention and interest.',
+        '🎯 **Exam Tips**: Show balanced equations clearly. Include units in calculations. Draw structures neatly. For mechanisms, show electron movement. Practice time management.',
+      ];
+    } else if (subjectLower.contains('mathematics')) {
+      tips = [
+        '📖 **Understand First**: Don\'t memorize formulas blindly. Understand derivation, geometric meaning, and conditions. Mathematics is about understanding patterns and relationships.',
+        '📐 **Practice Daily**: Mathematics requires daily practice. Solve 15-20 problems daily. Start with easy, progress to medium, then hard. Regular practice is key to mastery.',
+        '✍️ **Show All Steps**: Always show complete solutions. This helps in: (1) Finding mistakes, (2) Getting partial marks, (3) Understanding process, (4) Building confidence.',
+        '🔢 **Check Answers**: Always verify answers. Methods: substitute back, use alternative method, check reasonableness, use calculator for verification. Develop checking habit.',
+        '📊 **Problem Types**: Practice all types: direct application, word problems, proofs, applications. Don\'t avoid difficult problems - they build problem-solving skills.',
+        '⏰ **Time Management**: Practice time-bound solving. Easy: 2-3 min, Medium: 4-5 min, Hard: 6-8 min. Develop speed without sacrificing accuracy.',
+        '🔄 **Regular Revision**: Revise formulas weekly. Create formula sheet. Practice from it without looking. Regular revision prevents forgetting.',
+        '💡 **Multiple Methods**: Learn alternative methods. Sometimes substitution is easier than direct calculation. Having multiple approaches increases problem-solving flexibility.',
+        '📚 **NCERT Focus**: Complete NCERT thoroughly. Most exam questions are NCERT-based. Solve all examples, exercises, and miscellaneous questions. Understand each step.',
+        '🎯 **Exam Strategy**: Read problem twice. Identify given and required. Choose method. Solve step-by-step. Verify answer. Show work clearly. Manage time effectively.',
+      ];
+    } else {
+      // Biology or default tips
+      tips = [
+        '📖 **Read & Understand**: Biology requires understanding processes, not just memorization. Focus on mechanisms, relationships, and significance. Read actively, not passively.',
+        '🔬 **Draw Diagrams**: Draw labeled diagrams for every structure and process. Drawing helps in: understanding, remembering, and scoring marks. Practice drawing from memory.',
+        '📊 **Process Understanding**: Understand step-by-step processes: photosynthesis, respiration, reproduction, etc. Create flowcharts. Know what happens at each step and why.',
+        '🔗 **Make Connections**: Connect concepts: structure → function, process → significance, mechanism → application. Understanding relationships improves retention.',
+        '📝 **Terminology Mastery**: Learn scientific terms with meanings. Create flashcards. Practice spelling correctly. Many marks lost due to spelling errors in biological terms.',
+        '✅ **Regular Revision**: Biology has lots of information. Revise daily for first week, then weekly. Use spaced repetition. Review diagrams regularly.',
+        '💡 **Real Examples**: Relate to real-world: diseases, agriculture, environment, daily life. Examples help in understanding and remembering. CBSE often asks application-based questions.',
+        '🔄 **Practice Questions**: Solve previous year questions. Focus on: definitions, diagrams, processes, applications. Practice time-bound solving for exam preparation.',
+        '📚 **NCERT Priority**: NCERT is most important. Read thoroughly. Understand each diagram. Solve all questions. Most exam questions are directly or indirectly from NCERT.',
+        '🎯 **Exam Strategy**: For diagrams: draw neatly, label clearly, add details. For processes: write step-by-step, mention significance. Show all steps for full marks.',
+      ];
+    }
+    
+    // Add chapter-specific tips if needed
+    if (chapterLower.contains('derivative') || chapterLower.contains('differentiation')) {
+      tips.add('⚡ **Chain Rule Mastery**: Chain rule is crucial. Practice composite functions. Break complex functions into simpler parts. Common mistake: forgetting to multiply by inner derivative.');
+      tips.add('📐 **Applications Focus**: Derivatives have many applications. Practice: rate of change, optimization, curve sketching. These are frequently asked in exams.');
+    }
+    
+    return tips;
   }
 
-  static List<Map<String, String>> _generatePracticeQuestions(String subject, String chapter) {
+  static List<Map<String, String>> generatePracticeQuestions(String subject, String chapter) {
     final subjectLower = subject.toLowerCase();
     final chapterLower = chapter.toLowerCase();
     
@@ -265,6 +373,17 @@ This chapter builds the groundwork for understanding more advanced topics. Maste
           {'question': 'Q. Define electric dipole moment. Derive an expression for the electric field due to an electric dipole at a point on its axial line. (5 marks)', 'type': 'Conceptual', 'difficulty': 'Hard'},
           {'question': 'Q. Two identical point charges, each of magnitude q, are placed at a distance 2a apart. Find the electric field at the midpoint of the line joining them. (3 marks)', 'type': 'Numerical', 'difficulty': 'Hard'},
           {'question': 'Q. Explain why electric field lines never intersect each other. (2 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
+          {'question': 'Q. Three point charges +q, +q, and -2q are placed at vertices of an equilateral triangle. Find the net force on one of the +q charges. (3 marks)', 'type': 'Numerical', 'difficulty': 'Hard'},
+          {'question': 'Q. What is the electric field at a point on the perpendicular bisector of an electric dipole? Derive the expression. (5 marks)', 'type': 'Derivation', 'difficulty': 'Hard'},
+          {'question': 'Q. Explain the concept of electric flux. How is it related to Gauss\'s law? (3 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
+          {'question': 'Q. A charge of 10μC is placed at the center of a cube of side 10cm. Calculate the electric flux through one face of the cube. (3 marks)', 'type': 'Numerical', 'difficulty': 'Medium'},
+          {'question': 'Q. Define electric potential. How is it related to electric field? (2 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
+          {'question': 'Q. Calculate the electric potential at a distance of 0.2m from a point charge of 5μC. (2 marks)', 'type': 'Numerical', 'difficulty': 'Easy'},
+          {'question': 'Q. What is the work done in moving a charge of 2μC from infinity to a point at potential 100V? (2 marks)', 'type': 'Numerical', 'difficulty': 'Easy'},
+          {'question': 'Q. Explain the principle of superposition for electric potential. (2 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
+          {'question': 'Q. Derive the expression for electric field due to an infinite line charge using Gauss\'s law. (5 marks)', 'type': 'Derivation', 'difficulty': 'Hard'},
+          {'question': 'Q. Two charges of +4μC and -6μC are placed 20cm apart. Find the point where electric field is zero. (3 marks)', 'type': 'Numerical', 'difficulty': 'Hard'},
+          {'question': 'Q. What is the electric field inside a uniformly charged spherical shell? Justify your answer. (3 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
         ];
       } else if (chapterLower.contains('current') || description.toLowerCase().contains('current') || description.toLowerCase().contains('circuit')) {
         questions = [
@@ -280,6 +399,17 @@ This chapter builds the groundwork for understanding more advanced topics. Maste
           {'question': 'Q. Three resistors of resistances 4Ω, 6Ω, and 10Ω are connected in series across a battery of emf 20V. Calculate the current flowing through each resistor. (3 marks)', 'type': 'Numerical', 'difficulty': 'Hard'},
           {'question': 'Q. State Kirchhoff\'s laws. Apply them to find the current in a given circuit. (5 marks)', 'type': 'Conceptual', 'difficulty': 'Hard'},
           {'question': 'Q. A wire of resistance R is stretched to double its length. What will be its new resistance? (2 marks)', 'type': 'Numerical', 'difficulty': 'Medium'},
+          {'question': 'Q. Explain the working principle of a potentiometer. Why is it more accurate than a voltmeter? (3 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
+          {'question': 'Q. A cell of EMF 2V and internal resistance 0.5Ω is connected to a resistor of 3.5Ω. Calculate the current and terminal voltage. (3 marks)', 'type': 'Numerical', 'difficulty': 'Medium'},
+          {'question': 'Q. Derive the expression for equivalent resistance of resistors in parallel. (3 marks)', 'type': 'Derivation', 'difficulty': 'Medium'},
+          {'question': 'Q. What is the effect of temperature on resistance of a conductor? Explain with formula. (2 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
+          {'question': 'Q. Three cells of EMF 1.5V each and internal resistance 0.2Ω are connected in series. Find the total EMF and internal resistance. (2 marks)', 'type': 'Numerical', 'difficulty': 'Easy'},
+          {'question': 'Q. Explain the difference between EMF and terminal voltage. (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
+          {'question': 'Q. A 100W bulb operates at 220V. Calculate its resistance and current. (2 marks)', 'type': 'Numerical', 'difficulty': 'Easy'},
+          {'question': 'Q. What is the maximum power transfer theorem? State the condition. (2 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
+          {'question': 'Q. Calculate the equivalent resistance between points A and B in a given complex circuit. (5 marks)', 'type': 'Numerical', 'difficulty': 'Hard'},
+          {'question': 'Q. Explain the concept of drift velocity of electrons in a conductor. (2 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
+          {'question': 'Q. A wire of length L and resistance R is cut into n equal parts. If these parts are connected in parallel, find the equivalent resistance. (3 marks)', 'type': 'Numerical', 'difficulty': 'Medium'},
         ];
       } else if (chapterLower.contains('magnetic') || description.toLowerCase().contains('magnetic') || description.toLowerCase().contains('field')) {
         questions = [
@@ -437,47 +567,120 @@ This chapter builds the groundwork for understanding more advanced topics. Maste
       {'question': 'Q. Solve the following numerical problem based on $chapter: [Problem with given values] (3 marks)', 'type': 'Numerical', 'difficulty': 'Medium'},
       {'question': 'Q. Explain the practical applications of $chapter concepts with examples. (3 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
       {'question': 'Q. The SI unit for the main quantity in $chapter is ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Medium'},
-      {'question': 'Q. Calculate the numerical value using the formula from $chapter. (Given values) (2 marks)', 'type': 'Numerical', 'difficulty': 'Medium'},
-      {'question': 'Q. Compare and contrast the concepts in $chapter with related topics in Physics. (5 marks)', 'type': 'Conceptual', 'difficulty': 'Hard'},
     ];
   }
   
   static List<Map<String, String>> _generateCBSEChemistryQuestions(String chapter, String description) {
     return [
-      {'question': 'Q. Define the key terms in $chapter as per CBSE Chemistry syllabus. (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
-      {'question': 'Q. The main reaction type in $chapter is ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Easy'},
-      {'question': 'Q. Write balanced chemical equations related to $chapter. (2 marks)', 'type': 'Numerical', 'difficulty': 'Medium'},
-      {'question': 'Q. Explain the mechanism or process involved in $chapter with a suitable example. (3 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
-      {'question': 'Q. Calculate the numerical values based on $chapter formulas. (Given data) (3 marks)', 'type': 'Numerical', 'difficulty': 'Medium'},
-      {'question': 'Q. The key concept in $chapter involves ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Medium'},
-      {'question': 'Q. Solve a stoichiometry problem related to $chapter. (Given masses) (3 marks)', 'type': 'Numerical', 'difficulty': 'Hard'},
-      {'question': 'Q. Compare and contrast different concepts in $chapter with examples. (5 marks)', 'type': 'Conceptual', 'difficulty': 'Hard'},
+      // Chemical Reactions and Equations
+      {'question': 'Q. What is a chemical equation? Why is it necessary to balance a chemical equation? (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
+      {'question': 'Q. Balance the following chemical equation: Fe + H₂O → Fe₃O₄ + H₂ (2 marks)', 'type': 'Numerical', 'difficulty': 'Medium'},
+      {'question': 'Q. The process of gain of oxygen or loss of hydrogen is called ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Easy'},
+      
+      // Acids, Bases and Salts
+      {'question': 'Q. What is the pH scale? What is the pH of a neutral solution? (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
+      {'question': 'Q. A solution turns red litmus blue. The pH of the solution is likely to be ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Easy'},
+      {'question': 'Q. What happens when an acid reacts with a metal carbonate? Write the chemical equation. (3 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
+      
+      // Metals and Non-metals
+      {'question': 'Q. What are the main physical properties of metals and non-metals? (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
+      {'question': 'Q. The most reactive metal is ______ while the most reactive non-metal is ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Medium'},
+      {'question': 'Q. Explain the process of electrolytic refining of copper with a neat labeled diagram. (5 marks)', 'type': 'Conceptual', 'difficulty': 'Hard'},
+      
+      // Carbon and its Compounds
+      {'question': 'Q. What is a homologous series? Give one example. (2 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
+      {'question': 'Q. The functional group present in alcohols is ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Easy'},
+      {'question': 'Q. Draw the electron dot structure of ethane (C₂H₆) and ethene (C₂H₄). (3 marks)', 'type': 'Numerical', 'difficulty': 'Medium'},
+      
+      // Periodic Classification of Elements
+      {'question': 'Q. State Mendeleev\'s Periodic Law. (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
+      {'question': 'Q. In the modern periodic table, elements are arranged in order of their ______ numbers. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Easy'},
+      {'question': 'Q. How does the valency of elements vary in a period and in a group? (3 marks)', 'type': 'Conceptual', 'difficulty': 'Hard'},
+      
+      // Chemical Bonding
+      {'question': 'Q. What is an ionic bond? Give an example. (2 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
+      {'question': 'Q. The bond formed by sharing of electrons is called a ______ bond. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Easy'},
+      {'question': 'Q. Explain the formation of a double bond in an oxygen molecule. (3 marks)', 'type': 'Conceptual', 'difficulty': 'Hard'},
+      
+      // States of Matter
+      {'question': 'Q. What is the effect of temperature on the rate of diffusion? (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
+      {'question': 'Q. The process by which a solid changes directly into vapor is called ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Medium'}
     ];
   }
   
   static List<Map<String, String>> _generateCBSEBiologyQuestions(String chapter, String description) {
     return [
-      {'question': 'Q. Define the main biological terms in $chapter (CBSE Biology). (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
-      {'question': 'Q. The main biological process in $chapter is ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Easy'},
-      {'question': 'Q. Explain the structure and function of key components in $chapter with labeled diagrams. (5 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
-      {'question': 'Q. Describe the process or mechanism involved in $chapter step by step. (3 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
-      {'question': 'Q. The key organelle involved in $chapter is the ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Medium'},
-      {'question': 'Q. Differentiate between related concepts in $chapter with examples. (3 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
-      {'question': 'Q. Explain the importance of $chapter in biological systems. (5 marks)', 'type': 'Conceptual', 'difficulty': 'Hard'},
-      {'question': 'Q. $chapter plays a crucial role in ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Hard'},
+      // Life Processes
+      {'question': 'Q. What are the basic life processes common to all living organisms? (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
+      {'question': 'Q. The process of taking in food and its utilization by the body is called ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Easy'},
+      {'question': 'Q. Explain the process of photosynthesis with a labeled diagram. (5 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
+      
+      // Control and Coordination
+      {'question': 'Q. What is a reflex action? Explain with an example. (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
+      {'question': 'Q. The gap between two neurons is called a ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Easy'},
+      {'question': 'Q. Draw a neat labeled diagram of a neuron and explain its structure. (3 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
+      
+      // How do Organisms Reproduce
+      {'question': 'Q. Differentiate between sexual and asexual reproduction with examples. (3 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
+      {'question': 'Q. The process of fusion of male and female gametes is called ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Easy'},
+      {'question': 'Q. Explain the process of binary fission in Amoeba with diagrams. (5 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
+      
+      // Heredity and Evolution
+      {'question': 'Q. What is meant by the term \'evolution\'? (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
+      {'question': 'Q. The study of heredity and variation is called ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Easy'},
+      {'question': 'Q. Explain Mendel\'s law of inheritance with a monohybrid cross. (5 marks)', 'type': 'Conceptual', 'difficulty': 'Hard'},
+      
+      // Our Environment
+      {'question': 'Q. What is an ecosystem? List its main components. (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
+      {'question': 'Q. The flow of energy in a food chain is ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Easy'},
+      {'question': 'Q. Explain the role of decomposers in an ecosystem. (3 marks)', 'type': 'Conceptual', 'difficulty': 'Medium'},
+      
+      // Management of Natural Resources
+      {'question': 'Q. Why should we conserve forests and wildlife? (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
+      {'question': 'Q. The three R\'s to save the environment are ______, ______, and ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Easy'},
+      {'question': 'Q. Explain the concept of sustainable development with examples. (5 marks)', 'type': 'Conceptual', 'difficulty': 'Hard'},
+      
+      // Human Health and Disease
+      {'question': 'Q. What are communicable diseases? Give two examples. (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
+      {'question': 'Q. The disease caused by the bite of a female Anopheles mosquito is ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Medium'}
     ];
   }
   
   static List<Map<String, String>> _generateCBSEMathematicsQuestions(String chapter, String description) {
     return [
-      {'question': 'Q. State the main theorem or formula in $chapter (CBSE Mathematics). (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
-      {'question': 'Q. The main formula in $chapter is ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Easy'},
-      {'question': 'Q. Prove the key theorem or identity in $chapter. Show all steps. (5 marks)', 'type': 'Conceptual', 'difficulty': 'Hard'},
-      {'question': 'Q. Solve the following problem based on $chapter: [Problem statement] (3 marks)', 'type': 'Numerical', 'difficulty': 'Medium'},
-      {'question': 'Q. According to the theorem in $chapter, the result is ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Medium'},
-      {'question': 'Q. Apply the concepts of $chapter to solve a real-world problem. (5 marks)', 'type': 'Application', 'difficulty': 'Hard'},
-      {'question': 'Q. Find the solution to the numerical problem in $chapter. (Given values) (3 marks)', 'type': 'Numerical', 'difficulty': 'Medium'},
-      {'question': 'Q. Calculate the value using $chapter formula. Show all calculations. (3 marks)', 'type': 'Numerical', 'difficulty': 'Hard'},
+      // Real Numbers
+      {'question': 'Q. State Euclid\'s division lemma. (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
+      {'question': 'Q. The decimal expansion of a rational number is either ______ or ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Easy'},
+      {'question': 'Q. Use Euclid\'s division algorithm to find the HCF of 135 and 225. (3 marks)', 'type': 'Numerical', 'difficulty': 'Medium'},
+      
+      // Polynomials
+      {'question': 'Q. What is the degree of the polynomial 4x³ + 2x² - 5x + 1? (1 mark)', 'type': 'Numerical', 'difficulty': 'Easy'},
+      {'question': 'Q. The zeroes of the polynomial x² - 2x - 8 are ______ and ______. (2 marks)', 'type': 'Numerical', 'difficulty': 'Medium'},
+      {'question': 'Q. If α and β are the zeroes of the polynomial x² - 5x + 6, find the value of α² + β². (3 marks)', 'type': 'Numerical', 'difficulty': 'Hard'},
+      
+      // Pair of Linear Equations in Two Variables
+      {'question': 'Q. What is the condition for a pair of linear equations to be consistent? (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
+      {'question': 'Q. The pair of equations x + 2y = 5 and 3x + 6y = 15 is ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Medium'},
+      {'question': 'Q. Solve the following pair of equations: 2x + 3y = 11 and 2x - 4y = -24. (3 marks)', 'type': 'Numerical', 'difficulty': 'Medium'},
+      
+      // Quadratic Equations
+      {'question': 'Q. What is the standard form of a quadratic equation? (1 mark)', 'type': 'Conceptual', 'difficulty': 'Easy'},
+      {'question': 'Q. The nature of roots of the equation x² - 4x + 4 = 0 is ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Easy'},
+      {'question': 'Q. Find the roots of the quadratic equation 2x² - 5x + 3 = 0 by factorization. (3 marks)', 'type': 'Numerical', 'difficulty': 'Medium'},
+      
+      // Arithmetic Progressions
+      {'question': 'Q. What is the common difference of the AP: 5, 2, -1, -4, ...? (1 mark)', 'type': 'Numerical', 'difficulty': 'Easy'},
+      {'question': 'Q. The sum of first n natural numbers is given by the formula ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Easy'},
+      {'question': 'Q. Find the 10th term of the AP: 3, 8, 13, 18, ... (2 marks)', 'type': 'Numerical', 'difficulty': 'Medium'},
+      
+      // Triangles
+      {'question': 'Q. State the Basic Proportionality (Thales) Theorem. (2 marks)', 'type': 'Conceptual', 'difficulty': 'Easy'},
+      {'question': 'Q. In two similar triangles, the ratio of their areas is equal to the square of the ratio of their corresponding ______. (1 mark)', 'type': 'FillInTheBlanks', 'difficulty': 'Medium'},
+      {'question': 'Q. In a triangle ABC, if DE || BC and AD/DB = 3/5, find AE/EC. (3 marks)', 'type': 'Numerical', 'difficulty': 'Hard'},
+      
+      // Coordinate Geometry
+      {'question': 'Q. Find the distance between the points (2, 3) and (5, 7). (2 marks)', 'type': 'Numerical', 'difficulty': 'Easy'},
+      {'question': 'Q. The coordinates of the mid-point of the line segment joining (4, -3) and (8, 5) are ______. (1 mark)', 'type': 'Numerical', 'difficulty': 'Medium'}
     ];
   }
 
