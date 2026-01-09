@@ -669,12 +669,26 @@ class PaperViewerScreen extends StatelessWidget {
   }
 
   String _generateMCQ(String subjectId, int num) {
-    final topics = _getChapterTopics();
-    final allTopics = _getSubjectLevelTopics(subjectId);
+    // Get topics from the specific subject, not from current context
+    final topics = _getSubjectLevelTopics(subjectId);
+    if (topics.isEmpty) {
+      // Fallback to chapter topics if subject topics not available
+      final chapterTopics = _getChapterTopics();
+      if (chapterTopics.isEmpty) {
+        return 'Q$num. Select the correct option.';
+      }
+      final topic = chapterTopics[(num * 7 + 13) % chapterTopics.length];
+      final relatedTopic = chapterTopics[(num * 11 + 17) % chapterTopics.length];
+      if (paperType == '90match') {
+        return AIQuestionService.generateMCQ(subjectId, num, topic, relatedTopic);
+      }
+      return 'Q$num. ${topic} is related to which of the following concepts?';
+    }
+    
     // Use different calculation to avoid repetition
     final topicIndex = (num * 7 + 13) % topics.length;
     final topic = topics[topicIndex];
-    final relatedTopic = allTopics[(num * 11 + 17) % allTopics.length];
+    final relatedTopic = topics[(num * 11 + 17) % topics.length];
     final is90Match = paperType == '90match';
     
     if (is90Match) {
@@ -762,46 +776,97 @@ class PaperViewerScreen extends StatelessWidget {
   }
 
   List<String> _generateOptions(String subjectId, int questionNum) {
-    final topics = _getChapterTopics();
     final is90Match = paperType == '90match';
     
     if (is90Match) {
-      // Generate more realistic options from all subjects for 90% match papers
-      final allSubjects = DataService.getSubjects();
+      // For 90% match papers, use topics from the question's specific subject first
+      final subjectTopics = _getSubjectLevelTopics(subjectId);
       final allOptions = <String>[];
       
-      // Collect topics from all subjects
+      // Add topics from the question's subject first (most relevant)
+      allOptions.addAll(subjectTopics);
+      
+      // Then add topics from other subjects for variety
+      final allSubjects = DataService.getSubjects();
       for (var subject in allSubjects) {
-        final subjectTopics = AIQuestionService.getAllSubjectTopics(subject.id);
-        allOptions.addAll(subjectTopics);
+        if (subject.id != subjectId) {
+          final otherTopics = _getSubjectLevelTopics(subject.id);
+          allOptions.addAll(otherTopics);
+        }
       }
       
-      // If not enough topics, use chapter topics
+      // If still not enough, use AI service topics
       if (allOptions.length < 4) {
-        allOptions.addAll(_getSubjectLevelTopics(subjectId));
+        for (var subject in allSubjects) {
+          final aiTopics = AIQuestionService.getAllSubjectTopics(subject.id);
+          allOptions.addAll(aiTopics);
+        }
       }
       
-      // Generate unique options
-      final baseIndex = (questionNum * 7) % allOptions.length;
+      // Remove duplicates and ensure we have enough
+      final uniqueOptions = allOptions.toSet().toList();
+      if (uniqueOptions.length < 4) {
+        // Fallback to generic options
+        return [
+          'Option A: Concept A',
+          'Option B: Concept B',
+          'Option C: Concept C',
+          'Option D: Concept D',
+        ];
+      }
+      
+      // Generate unique options, prioritizing the question's subject
+      final baseIndex = (questionNum * 7) % subjectTopics.length;
+      final otherIndex = (questionNum * 11) % (uniqueOptions.length - subjectTopics.length);
+      
       return [
-        'Option A: ${allOptions[baseIndex % allOptions.length]}',
-        'Option B: ${allOptions[(baseIndex + questionNum * 3) % allOptions.length]}',
-        'Option C: ${allOptions[(baseIndex + questionNum * 5) % allOptions.length]}',
-        'Option D: ${allOptions[(baseIndex + questionNum * 11) % allOptions.length]}',
+        'Option A: ${subjectTopics[baseIndex % subjectTopics.length]}',
+        'Option B: ${subjectTopics[(baseIndex + questionNum * 3) % subjectTopics.length]}',
+        'Option C: ${uniqueOptions[(subjectTopics.length + otherIndex) % uniqueOptions.length]}',
+        'Option D: ${uniqueOptions[(subjectTopics.length + otherIndex + questionNum * 5) % uniqueOptions.length]}',
+      ];
+    }
+    
+    // For previous year papers, use subject-specific topics
+    final topics = _getSubjectLevelTopics(subjectId);
+    if (topics.isEmpty) {
+      final chapterTopics = _getChapterTopics();
+      if (chapterTopics.isEmpty) {
+        return [
+          'Option A: Option 1',
+          'Option B: Option 2',
+          'Option C: Option 3',
+          'Option D: Option 4',
+        ];
+      }
+      return [
+        'Option A: ${chapterTopics[questionNum % chapterTopics.length]}',
+        'Option B: ${chapterTopics[(questionNum + 1) % chapterTopics.length]}',
+        'Option C: ${chapterTopics[(questionNum + 2) % chapterTopics.length]}',
+        'Option D: ${chapterTopics[(questionNum + 3) % chapterTopics.length]}',
       ];
     }
     
     return [
-      'Option A: ${_getRandomConcept(questionNum)}',
-      'Option B: ${_getRandomConcept(questionNum + 1)}',
-      'Option C: ${_getRandomConcept(questionNum + 2)}',
-      'Option D: ${_getRandomConcept(questionNum + 3)}',
+      'Option A: ${topics[questionNum % topics.length]}',
+      'Option B: ${topics[(questionNum + 1) % topics.length]}',
+      'Option C: ${topics[(questionNum + 2) % topics.length]}',
+      'Option D: ${topics[(questionNum + 3) % topics.length]}',
     ];
   }
 
   // Section A - Very Short Answer (1 mark)
   String _generateVeryShortAnswer(String subjectId, int num) {
-    final topics = _getChapterTopics();
+    // Get topics from the specific subject
+    final topics = _getSubjectLevelTopics(subjectId);
+    if (topics.isEmpty) {
+      final chapterTopics = _getChapterTopics();
+      if (chapterTopics.isEmpty) return 'Q$num. Answer the following.';
+      final topic = chapterTopics[((num - 1) * 3 + 7) % chapterTopics.length];
+      final questions = _getVeryShortAnswerQuestions(subjectId, topic);
+      return questions[((num - 1) * 5 + 11) % questions.length];
+    }
+    
     // Use different calculation to avoid repetition
     final topicIndex = ((num - 1) * 3 + 7) % topics.length;
     final topic = topics[topicIndex];
@@ -812,7 +877,19 @@ class PaperViewerScreen extends StatelessWidget {
 
   // Section B - Short Answer (2 marks) - Q21-Q30
   String _generateShortAnswer(String subjectId, int num) {
-    final topics = _getChapterTopics();
+    // Get topics from the specific subject
+    final topics = _getSubjectLevelTopics(subjectId);
+    if (topics.isEmpty) {
+      final chapterTopics = _getChapterTopics();
+      if (chapterTopics.isEmpty) return 'Q$num. Answer the following.';
+      final topic = chapterTopics[((num - 21) * 7 + 13) % chapterTopics.length];
+      if (paperType == '90match') {
+        return AIQuestionService.generateShortAnswer(subjectId, num, topic);
+      }
+      final questions = _getShortAnswerQuestions(subjectId, topic);
+      return questions[((num - 21) * 3 + 17) % questions.length];
+    }
+    
     // Use different calculation to avoid repetition
     final topicIndex = ((num - 21) * 7 + 13) % topics.length;
     final topic = topics[topicIndex];
@@ -829,12 +906,24 @@ class PaperViewerScreen extends StatelessWidget {
 
   // Section C - Long Answer I (3 marks) - Q31-Q40
   String _generateLongAnswer(String subjectId, int num) {
-    final topics = _getChapterTopics();
-    final allTopics = _getSubjectLevelTopics(subjectId);
+    // Get topics from the specific subject
+    final topics = _getSubjectLevelTopics(subjectId);
+    if (topics.isEmpty) {
+      final chapterTopics = _getChapterTopics();
+      if (chapterTopics.isEmpty) return 'Q$num. Answer the following in detail.';
+      final topic = chapterTopics[((num - 31) * 11 + 19) % chapterTopics.length];
+      final relatedTopic = chapterTopics[((num - 31) * 13 + 23) % chapterTopics.length];
+      if (paperType == '90match') {
+        return AIQuestionService.generateLongAnswer(subjectId, num, topic, relatedTopic);
+      }
+      final questions = _getLongAnswerQuestions(subjectId, topic);
+      return questions[((num - 31) * 7 + 23) % questions.length];
+    }
+    
     // Use different calculation to avoid repetition
     final topicIndex = ((num - 31) * 11 + 19) % topics.length;
     final topic = topics[topicIndex];
-    final relatedTopic = allTopics[((num - 31) * 13 + 23) % allTopics.length];
+    final relatedTopic = topics[((num - 31) * 13 + 23) % topics.length];
     
     if (paperType == '90match') {
       // Use AI service to generate questions
@@ -848,12 +937,24 @@ class PaperViewerScreen extends StatelessWidget {
 
   // Section D - Long Answer II (4 marks) - Q41-Q45
   String _generateLongAnswerII(String subjectId, int num) {
-    final topics = _getChapterTopics();
-    final allTopics = _getSubjectLevelTopics(subjectId);
+    // Get topics from the specific subject
+    final topics = _getSubjectLevelTopics(subjectId);
+    if (topics.isEmpty) {
+      final chapterTopics = _getChapterTopics();
+      if (chapterTopics.isEmpty) return 'Q$num. Answer the following in detail.';
+      final topic = chapterTopics[((num - 41) * 13 + 29) % chapterTopics.length];
+      final relatedTopic = chapterTopics[((num - 41) * 17 + 37) % chapterTopics.length];
+      if (paperType == '90match') {
+        return AIQuestionService.generateLongAnswer(subjectId, num, topic, relatedTopic);
+      }
+      final questions = _getLongAnswerIIQuestions(subjectId, topic);
+      return questions[((num - 41) * 11 + 31) % questions.length];
+    }
+    
     // Use different calculation to avoid repetition
     final topicIndex = ((num - 41) * 13 + 29) % topics.length;
     final topic = topics[topicIndex];
-    final relatedTopic = allTopics[((num - 41) * 17 + 37) % allTopics.length];
+    final relatedTopic = topics[((num - 41) * 17 + 37) % topics.length];
     
     if (paperType == '90match') {
       // Use AI service to generate questions
@@ -867,7 +968,15 @@ class PaperViewerScreen extends StatelessWidget {
 
   // Section E - Case-based Question (5 marks) - Q46-Q50
   String _generateCaseBasedQuestion(String subjectId, int num) {
-    final topics = _getChapterTopics();
+    // Get topics from the specific subject
+    final topics = _getSubjectLevelTopics(subjectId);
+    if (topics.isEmpty) {
+      final chapterTopics = _getChapterTopics();
+      if (chapterTopics.isEmpty) return 'Q$num. Read the case study and answer.';
+      final topic = chapterTopics[((num - 46) * 17 + 37) % chapterTopics.length];
+      return _getCaseBasedQuestionText(subjectId, topic);
+    }
+    
     // Use different calculation to avoid repetition
     final topicIndex = ((num - 46) * 17 + 37) % topics.length;
     final topic = topics[topicIndex];
@@ -875,10 +984,22 @@ class PaperViewerScreen extends StatelessWidget {
   }
 
   String _generateVeryLongAnswer(String subjectId, int num) {
-    final topics = _getChapterTopics();
+    // Get topics from the specific subject
+    final topics = _getSubjectLevelTopics(subjectId);
+    if (topics.isEmpty) {
+      final chapterTopics = _getChapterTopics();
+      if (chapterTopics.isEmpty) return 'Q$num. Answer the following questions.';
+      final topic = chapterTopics[(num - 46) % chapterTopics.length];
+      final relatedTopic = chapterTopics[(num * 3) % chapterTopics.length];
+      if (paperType == '90match') {
+        return AIQuestionService.generateVeryLongAnswer(subjectId, num, topic, relatedTopic);
+      }
+      final questionTemplates = _getVeryLongAnswerTemplates(subjectId, topic, relatedTopic);
+      return questionTemplates[(num - 46) % questionTemplates.length].replaceAll('\$num', '$num');
+    }
+    
     final topic = topics[(num - 46) % topics.length];
-    final allTopics = _getSubjectLevelTopics(subjectId);
-    final relatedTopic = allTopics[(num * 3) % allTopics.length];
+    final relatedTopic = topics[(num * 3) % topics.length];
     
     if (paperType == '90match') {
       // Use AI service to generate questions
@@ -938,8 +1059,19 @@ class PaperViewerScreen extends StatelessWidget {
   }
 
   List<Map<String, dynamic>> _generateSubQuestions(String subjectId, int questionNum) {
-    final topics = _getChapterTopics();
-    final topic = topics[(questionNum * 7) % topics.length];
+    // Get topics from the specific subject
+    final topics = _getSubjectLevelTopics(subjectId);
+    String topic;
+    if (topics.isEmpty) {
+      final chapterTopics = _getChapterTopics();
+      if (chapterTopics.isEmpty) {
+        topic = 'the topic';
+      } else {
+        topic = chapterTopics[(questionNum * 7) % chapterTopics.length];
+      }
+    } else {
+      topic = topics[(questionNum * 7) % topics.length];
+    }
     
     if (paperType == '90match') {
       // Generate AI-based sub-questions
