@@ -494,99 +494,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       ],
                     ),
                   ),
-                  // Avengers Roadmap Card
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const RoadmapNavigationScreen(),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              const Color(0xFFC41E3A), // Marvel red
-                              const Color(0xFFED1C24),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFC41E3A).withOpacity(0.4),
-                              blurRadius: 15,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.25),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Text(
-                                  '🦸',
-                                  style: TextStyle(fontSize: 28),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Text(
-                                      'AVENGERS ROADMAP',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        letterSpacing: 1.2,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Complete your learning journey',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.white.withOpacity(0.9),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.25),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.arrow_forward,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
                   Expanded(
                     child: RefreshIndicator(
                       onRefresh: _loadData,
@@ -838,4 +745,3 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 }
-

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'progress_screen.dart';
 import 'game_screen.dart';
-import 'exam_screen.dart';
 import 'settings_screen.dart';
+import 'exam_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final Function(ThemeMode)? onThemeModeChanged;
@@ -25,8 +25,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     _screens.addAll([
       const HomeScreen(),
       const ProgressScreen(),
-      const GameScreen(),
       const ExamScreen(),
+      const GameScreen(),
       SettingsScreen(onThemeModeChanged: widget.onThemeModeChanged),
     ]);
   }
@@ -72,12 +72,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               label: 'Progress',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.play_circle_outline),
-              label: 'Game',
+              icon: Icon(Icons.assignment),
+              label: 'Exam',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.quiz),
-              label: 'Exam',
+              icon: Icon(Icons.play_circle_outline),
+              label: 'Game',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.settings),

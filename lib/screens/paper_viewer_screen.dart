@@ -29,7 +29,9 @@ class PaperViewerScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           paperType == '90match'
-              ? '90% Match Paper - All Subjects'
+              ? subjectName == 'All Subjects'
+                  ? '90% Match Paper - All Subjects'
+                  : '90% Match Paper - ${subject?.name ?? chapter?.name ?? subjectName}'
               : year != null
                   ? 'CBSE Board Exam $year - ${subject?.name ?? chapter?.name ?? subjectName}'
                   : 'Previous Year Paper - ${subject?.name ?? chapter?.name ?? subjectName}',

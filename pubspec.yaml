@@ -39,6 +39,8 @@ dependencies:
   url_launcher: ^6.2.5
   flutter_local_notifications: ^17.2.2
   timezone: ^0.9.4
+  http: ^1.1.0
+  dart_openai: ^5.0.1
 
 dev_dependencies:
   flutter_test:
