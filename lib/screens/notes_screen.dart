@@ -161,26 +161,38 @@ class _NotesScreenState extends State<NotesScreen> {
                   ),
                   if (note.isReminder && note.reminderDate != null)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.orange.shade400,
+                            Colors.red.shade400,
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.orange.withOpacity(0.3),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.notifications,
-                            size: 14,
-                            color: Theme.of(context).colorScheme.primary,
+                          const Icon(
+                            Icons.alarm,
+                            size: 16,
+                            color: Colors.white,
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 6),
                           Text(
                             formatTime(note.reminderDate!),
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 12,
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
@@ -195,6 +207,40 @@ class _NotesScreenState extends State<NotesScreen> {
                   style: Theme.of(context).textTheme.bodyMedium,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
+                ),
+              ],
+              if (note.isReminder && note.reminderDate != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.orange.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.alarm,
+                        size: 16,
+                        color: Colors.orange.shade700,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Alarm: ${_formatDateTime(note.reminderDate!)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.orange.shade700,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
               const SizedBox(height: 12),
@@ -255,54 +301,149 @@ class _NotesScreenState extends State<NotesScreen> {
                   maxLines: 5,
                 ),
                 const SizedBox(height: 16),
-                CheckboxListTile(
-                  title: const Text('Set as Reminder'),
-                  value: isReminder,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      isReminder = value ?? false;
-                      if (!isReminder) {
-                        selectedReminderDate = null;
-                      }
-                    });
-                  },
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isReminder 
+                          ? Colors.orange 
+                          : Colors.grey.shade300,
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    color: isReminder 
+                        ? Colors.orange.withOpacity(0.1) 
+                        : Colors.transparent,
+                  ),
+                  child: CheckboxListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    title: Row(
+                      children: [
+                        Icon(
+                          Icons.alarm,
+                          color: isReminder ? Colors.orange : Colors.grey,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            'Set Alarm Reminder',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    subtitle: isReminder
+                        ? const Text(
+                            'You will get an alarm sound at the set time',
+                            style: TextStyle(fontSize: 12),
+                          )
+                        : null,
+                    value: isReminder,
+                    onChanged: (value) {
+                      setDialogState(() {
+                        isReminder = value ?? false;
+                        if (!isReminder) {
+                          selectedReminderDate = null;
+                        }
+                      });
+                    },
+                  ),
                 ),
                 if (isReminder) ...[
-                  const SizedBox(height: 8),
-                  ListTile(
-                    title: Text(
-                      selectedReminderDate != null
-                          ? 'Reminder: ${_formatDateTime(selectedReminderDate!)}'
-                          : 'Select Reminder Date & Time',
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.orange.shade300,
+                        width: 1.5,
+                      ),
                     ),
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: selectedReminderDate ?? DateTime.now(),
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 365)),
-                      );
-                      if (date != null) {
-                        final time = await showTimePicker(
+                    child: InkWell(
+                      onTap: () async {
+                        final date = await showDatePicker(
                           context: context,
-                          initialTime: selectedReminderDate != null
-                              ? TimeOfDay.fromDateTime(selectedReminderDate!)
-                              : TimeOfDay.now(),
+                          initialDate: selectedReminderDate ?? DateTime.now(),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime.now().add(const Duration(days: 365)),
                         );
-                        if (time != null) {
-                          setDialogState(() {
-                            selectedReminderDate = DateTime(
-                              date.year,
-                              date.month,
-                              date.day,
-                              time.hour,
-                              time.minute,
-                            );
-                          });
+                        if (date != null) {
+                          final time = await showTimePicker(
+                            context: context,
+                            initialTime: selectedReminderDate != null
+                                ? TimeOfDay.fromDateTime(selectedReminderDate!)
+                                : TimeOfDay.now(),
+                          );
+                          if (time != null) {
+                            setDialogState(() {
+                              selectedReminderDate = DateTime(
+                                date.year,
+                                date.month,
+                                date.day,
+                                time.hour,
+                                time.minute,
+                              );
+                            });
+                          }
                         }
-                      }
-                    },
+                      },
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.shade400,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.access_time,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  selectedReminderDate != null
+                                      ? 'Alarm Set'
+                                      : 'Select Alarm Date & Time',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange.shade700,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  selectedReminderDate != null
+                                      ? _formatDateTime(selectedReminderDate!)
+                                      : 'Tap to set alarm time',
+                                  style: TextStyle(
+                                    color: selectedReminderDate != null
+                                        ? Colors.grey[700]
+                                        : Colors.grey[500],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: Colors.orange.shade700,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ],
@@ -345,22 +486,49 @@ class _NotesScreenState extends State<NotesScreen> {
                   isReminder: isReminder,
                 );
 
-                final saved = await _notesService.saveNote(newNote);
-                _loadNotes();
-                if (mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        saved 
-                          ? (isReminder 
-                              ? 'Note saved with reminder set!' 
-                              : (note == null ? 'Note added' : 'Note updated'))
-                          : 'Error saving note'
+                try {
+                  final saved = await _notesService.saveNote(newNote);
+                  if (mounted) {
+                    Navigator.pop(context);
+                    _loadNotes();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            if (saved && isReminder)
+                              const Icon(Icons.alarm, color: Colors.white, size: 20),
+                            if (saved && isReminder) const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                saved 
+                                  ? (isReminder 
+                                      ? 'Note saved! Alarm will ring at ${_formatDateTime(selectedReminderDate!)}' 
+                                      : (note == null ? 'Note added successfully' : 'Note updated successfully'))
+                                  : 'Error saving note. Please try again.'
+                              ),
+                            ),
+                          ],
+                        ),
+                        backgroundColor: saved 
+                            ? (isReminder ? Colors.orange : Colors.green) 
+                            : Colors.red,
+                        duration: saved 
+                            ? (isReminder ? const Duration(seconds: 4) : const Duration(seconds: 2))
+                            : const Duration(seconds: 3),
                       ),
-                      backgroundColor: saved ? Colors.green : Colors.red,
-                    ),
-                  );
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error saving note: ${e.toString()}'),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 3),
+                      ),
+                    );
+                  }
                 }
               },
               child: const Text('Save'),

@@ -44,33 +44,58 @@ class NotesService {
         notes.add(note);
       }
       
-      // Cancel old reminder if it existed
+      // Cancel old reminder if it existed (don't let this fail the save)
       if (oldNote != null && oldNote.isReminder && oldNote.reminderDate != null) {
-        await _notificationService.cancelReminder(int.parse(oldNote.id));
-      }
-      
-      // Schedule new reminder if set
-      if (note.isReminder && note.reminderDate != null) {
-        final now = DateTime.now();
-        if (note.reminderDate!.isAfter(now)) {
-          await _notificationService.scheduleReminder(
-            id: int.parse(note.id),
-            title: note.title,
-            body: note.content.isNotEmpty 
-                ? note.content.length > 100 
-                    ? '${note.content.substring(0, 100)}...' 
-                    : note.content
-                : 'Reminder: ${note.title}',
-            scheduledDate: note.reminderDate!,
-            payload: note.id,
-          );
+        try {
+          final oldId = int.tryParse(oldNote.id);
+          if (oldId != null) {
+            await _notificationService.cancelReminder(oldId);
+          }
+        } catch (e) {
+          // Ignore notification cancellation errors
+          print('Error canceling old reminder: $e');
         }
       }
       
+      // Schedule new reminder if set (don't let this fail the save)
+      if (note.isReminder && note.reminderDate != null) {
+        try {
+          final now = DateTime.now();
+          if (note.reminderDate!.isAfter(now)) {
+            final noteId = int.tryParse(note.id);
+            if (noteId != null) {
+              await _notificationService.scheduleReminder(
+                id: noteId,
+                title: note.title,
+                body: note.content.isNotEmpty 
+                    ? note.content.length > 100 
+                        ? '${note.content.substring(0, 100)}...' 
+                        : note.content
+                    : 'Reminder: ${note.title}',
+                scheduledDate: note.reminderDate!,
+                payload: note.id,
+              );
+            }
+          }
+        } catch (e) {
+          // Ignore notification scheduling errors, but log them
+          print('Error scheduling reminder: $e');
+        }
+      }
+      
+      // Save the note to SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final notesJson = json.encode(notes.map((n) => n.toJson()).toList());
-      return await prefs.setString(_notesKey, notesJson);
+      final saved = await prefs.setString(_notesKey, notesJson);
+      
+      if (!saved) {
+        print('Failed to save note to SharedPreferences');
+        return false;
+      }
+      
+      return true;
     } catch (e) {
+      print('Error saving note: $e');
       return false;
     }
   }
@@ -78,19 +103,42 @@ class NotesService {
   Future<bool> deleteNote(String noteId) async {
     try {
       final notes = await getNotes();
-      final note = notes.firstWhere((n) => n.id == noteId);
+      final noteIndex = notes.indexWhere((n) => n.id == noteId);
       
-      // Cancel reminder if exists
-      if (note.isReminder && note.reminderDate != null) {
-        await _notificationService.cancelReminder(int.parse(noteId));
+      if (noteIndex == -1) {
+        print('Note not found: $noteId');
+        return false;
       }
       
-      notes.removeWhere((note) => note.id == noteId);
+      final note = notes[noteIndex];
+      
+      // Cancel reminder if exists (don't let this fail the delete)
+      if (note.isReminder && note.reminderDate != null) {
+        try {
+          final id = int.tryParse(noteId);
+          if (id != null) {
+            await _notificationService.cancelReminder(id);
+          }
+        } catch (e) {
+          // Ignore notification cancellation errors
+          print('Error canceling reminder: $e');
+        }
+      }
+      
+      notes.removeAt(noteIndex);
       
       final prefs = await SharedPreferences.getInstance();
       final notesJson = json.encode(notes.map((n) => n.toJson()).toList());
-      return await prefs.setString(_notesKey, notesJson);
+      final deleted = await prefs.setString(_notesKey, notesJson);
+      
+      if (!deleted) {
+        print('Failed to delete note from SharedPreferences');
+        return false;
+      }
+      
+      return true;
     } catch (e) {
+      print('Error deleting note: $e');
       return false;
     }
   }
