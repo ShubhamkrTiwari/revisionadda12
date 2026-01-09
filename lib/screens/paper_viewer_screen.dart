@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/subject.dart';
 import '../services/data_service.dart';
+import '../services/ai_question_service.dart';
 
 class PaperViewerScreen extends StatelessWidget {
   final Chapter? chapter; // Optional - for chapter-specific papers
@@ -28,7 +29,7 @@ class PaperViewerScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           paperType == '90match'
-              ? '90% Match Paper - ${subject?.name ?? chapter?.name ?? subjectName}'
+              ? '90% Match Paper - All Subjects'
               : year != null
                   ? 'CBSE Board Exam $year - ${subject?.name ?? chapter?.name ?? subjectName}'
                   : 'Previous Year Paper - ${subject?.name ?? chapter?.name ?? subjectName}',
@@ -185,85 +186,6 @@ class PaperViewerScreen extends StatelessWidget {
             const SizedBox(height: 16),
             ..._buildQuestionsWithSections(),
             const SizedBox(height: 24),
-            // Answer Key Section
-            Card(
-              elevation: 2,
-              color: Colors.green.shade50,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.check_circle, color: Colors.green.shade700),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Answer Key',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    ..._generateAnswerKey().entries.map((entry) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Q${entry.key}: ',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.green.shade100,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.green),
-                              ),
-                              child: Text(
-                                entry.value,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green.shade700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Solutions Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  _showSolutions(context);
-                },
-                icon: const Icon(Icons.visibility),
-                label: const Text('View Detailed Solutions'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -316,49 +238,60 @@ class PaperViewerScreen extends StatelessWidget {
 
   List<Widget> _buildQuestionsWithSections() {
     final questions = _generateQuestions();
-    final isPreviousYear = paperType == 'previous' && year != null;
     final widgets = <Widget>[];
 
-    if (isPreviousYear) {
-      // Group questions by section
-      String? currentSection;
-      for (int i = 0; i < questions.length; i++) {
-        final question = questions[i];
-        final section = question['section'] as String?;
-        
-        // Add section header if section changed
-        if (section != null && section != currentSection) {
-          currentSection = section;
-          widgets.add(_buildSectionHeader(section, _getSectionInfo(section)));
-          widgets.add(const SizedBox(height: 8));
-        }
-        
-        widgets.add(_buildQuestionCard(i + 1, question));
+    // Group questions by section for both previous year and 90% match papers
+    String? currentSection;
+    for (int i = 0; i < questions.length; i++) {
+      final question = questions[i];
+      final section = question['section'] as String?;
+      
+      // Add section header if section changed
+      if (section != null && section != currentSection) {
+        currentSection = section;
+        widgets.add(_buildSectionHeader(section, _getSectionInfo(section)));
+        widgets.add(const SizedBox(height: 8));
       }
-    } else {
-      // For 90% match papers, show questions normally
-      for (int i = 0; i < questions.length; i++) {
-        widgets.add(_buildQuestionCard(i + 1, questions[i]));
-      }
+      
+      widgets.add(_buildQuestionCard(i + 1, question));
     }
 
     return widgets;
   }
 
   Map<String, String> _getSectionInfo(String section) {
-    switch (section) {
-      case 'A':
-        return {'title': 'Section A', 'subtitle': 'Very Short Answer Type Questions (1 mark each)', 'range': 'Q. No. 1 to 20'};
-      case 'B':
-        return {'title': 'Section B', 'subtitle': 'Short Answer Type Questions (2 marks each)', 'range': 'Q. No. 21 to 30'};
-      case 'C':
-        return {'title': 'Section C', 'subtitle': 'Long Answer Type I Questions (3 marks each)', 'range': 'Q. No. 31 to 40'};
-      case 'D':
-        return {'title': 'Section D', 'subtitle': 'Long Answer Type II Questions (4 marks each)', 'range': 'Q. No. 41 to 45'};
-      case 'E':
-        return {'title': 'Section E', 'subtitle': 'Case-based/Integrated Questions (5 marks each)', 'range': 'Q. No. 46 to 50'};
-      default:
-        return {'title': 'Section $section', 'subtitle': '', 'range': ''};
+    if (paperType == '90match') {
+      // For 90% match papers
+      switch (section) {
+        case 'A':
+          return {'title': 'Section A', 'subtitle': 'Multiple Choice Questions (1 mark each)', 'range': 'Q. No. 1 to 20'};
+        case 'B':
+          return {'title': 'Section B', 'subtitle': 'Short Answer Type Questions (2 marks each)', 'range': 'Q. No. 21 to 30'};
+        case 'C':
+          return {'title': 'Section C', 'subtitle': 'Long Answer Type I Questions (3 marks each)', 'range': 'Q. No. 31 to 40'};
+        case 'D':
+          return {'title': 'Section D', 'subtitle': 'Long Answer Type II Questions (4 marks each)', 'range': 'Q. No. 41 to 45'};
+        case 'E':
+          return {'title': 'Section E', 'subtitle': 'Very Long Answer/Case-based Questions (5 marks each)', 'range': 'Q. No. 46 to 50'};
+        default:
+          return {'title': 'Section $section', 'subtitle': '', 'range': ''};
+      }
+    } else {
+      // For previous year papers
+      switch (section) {
+        case 'A':
+          return {'title': 'Section A', 'subtitle': 'Very Short Answer Type Questions (1 mark each)', 'range': 'Q. No. 1 to 20'};
+        case 'B':
+          return {'title': 'Section B', 'subtitle': 'Short Answer Type Questions (2 marks each)', 'range': 'Q. No. 21 to 30'};
+        case 'C':
+          return {'title': 'Section C', 'subtitle': 'Long Answer Type I Questions (3 marks each)', 'range': 'Q. No. 31 to 40'};
+        case 'D':
+          return {'title': 'Section D', 'subtitle': 'Long Answer Type II Questions (4 marks each)', 'range': 'Q. No. 41 to 45'};
+        case 'E':
+          return {'title': 'Section E', 'subtitle': 'Case-based/Integrated Questions (5 marks each)', 'range': 'Q. No. 46 to 50'};
+        default:
+          return {'title': 'Section $section', 'subtitle': '', 'range': ''};
+      }
     }
   }
 
@@ -466,6 +399,24 @@ class PaperViewerScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (question['subject'] != null) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade100,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      question['subject'],
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green.shade700,
+                      ),
+                    ),
+                  ),
+                ],
                 const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -647,50 +598,69 @@ class PaperViewerScreen extends StatelessWidget {
       }
     } else {
       // 90% Match papers: Exact CBSE 2026 Exam Pattern - 50 Questions
+      // Include questions from ALL subjects (Physics, Chemistry, Mathematics, Biology)
+      final allSubjects = DataService.getSubjects();
+      final subjectIds = allSubjects.map((s) => s.id).toList();
+      
       // Section A - MCQs (1 mark) - 20 questions (Q1-Q20)
+      // Distribute: 5 questions from each subject
       for (int i = 1; i <= 20; i++) {
+        final questionSubjectId = subjectIds[(i - 1) % subjectIds.length];
         questions.add({
-          'question': _generateMCQ(subjectId, i),
-          'options': _generateOptions(subjectId),
+          'question': _generateMCQ(questionSubjectId, i),
+          'options': _generateOptions(questionSubjectId, i),
           'section': 'A',
           'marks': 1,
+          'subject': allSubjects.firstWhere((s) => s.id == questionSubjectId).name,
         });
       }
 
       // Section B - Short Answer (2 marks) - 10 questions (Q21-Q30)
+      // Distribute: ~2-3 questions from each subject
       for (int i = 21; i <= 30; i++) {
+        final questionSubjectId = subjectIds[(i - 21) % subjectIds.length];
         questions.add({
-          'question': _generateShortAnswer(subjectId, i),
+          'question': _generateShortAnswer(questionSubjectId, i),
           'section': 'B',
           'marks': 2,
+          'subject': allSubjects.firstWhere((s) => s.id == questionSubjectId).name,
         });
       }
 
       // Section C - Long Answer I (3 marks) - 10 questions (Q31-Q40)
+      // Distribute: ~2-3 questions from each subject
       for (int i = 31; i <= 40; i++) {
+        final questionSubjectId = subjectIds[(i - 31) % subjectIds.length];
         questions.add({
-          'question': _generateLongAnswer(subjectId, i),
+          'question': _generateLongAnswer(questionSubjectId, i),
           'section': 'C',
           'marks': 3,
+          'subject': allSubjects.firstWhere((s) => s.id == questionSubjectId).name,
         });
       }
 
       // Section D - Long Answer II (4 marks) - 5 questions (Q41-Q45)
+      // Distribute: 1-2 questions from each subject
       for (int i = 41; i <= 45; i++) {
+        final questionSubjectId = subjectIds[(i - 41) % subjectIds.length];
         questions.add({
-          'question': _generateLongAnswerII(subjectId, i),
+          'question': _generateLongAnswerII(questionSubjectId, i),
           'section': 'D',
           'marks': 4,
+          'subject': allSubjects.firstWhere((s) => s.id == questionSubjectId).name,
         });
       }
 
       // Section E - Very Long Answer/Case-based (5 marks) - 5 questions (Q46-Q50)
+      // Distribute: 1-2 questions from each subject
       for (int i = 46; i <= 50; i++) {
+        final questionSubjectId = subjectIds[(i - 46) % subjectIds.length];
         questions.add({
-          'question': _generateVeryLongAnswer(subjectId, i),
+          'question': _generateVeryLongAnswer(questionSubjectId, i),
           'section': 'E',
           'marks': 5,
-          'subQuestions': _generateSubQuestions(subjectId),
+          'subQuestions': _generateSubQuestions(questionSubjectId, i),
+          'subject': allSubjects.firstWhere((s) => s.id == questionSubjectId).name,
         });
       }
     }
@@ -700,48 +670,57 @@ class PaperViewerScreen extends StatelessWidget {
 
   String _generateMCQ(String subjectId, int num) {
     final topics = _getChapterTopics();
-    final topic = topics[num % topics.length];
+    final allTopics = _getSubjectLevelTopics(subjectId);
+    // Use different calculation to avoid repetition
+    final topicIndex = (num * 7 + 13) % topics.length;
+    final topic = topics[topicIndex];
+    final relatedTopic = allTopics[(num * 11 + 17) % allTopics.length];
     final is90Match = paperType == '90match';
     
     if (is90Match) {
-      return _generateExamLikeMCQ(subjectId, num, topic);
+      // Use AI service to generate questions
+      return AIQuestionService.generateMCQ(subjectId, num, topic, relatedTopic);
     }
     
     return 'Q$num. ${topic} is related to which of the following concepts in $_paperName?';
   }
 
-  String _generateExamLikeMCQ(String subjectId, int num, String topic) {
-    final templates = _getMCQTemplates(subjectId, topic);
-    final template = templates[num % templates.length];
-    return template.replaceAll('\$num', '$num');
-  }
-
-  List<String> _getMCQTemplates(String subjectId, String topic) {
+  List<String> _getMCQTemplates(String subjectId, String topic, String relatedTopic) {
     if (subjectId == 'physics') {
       return [
         'Q\$num. Which of the following statements is correct regarding $topic?',
-        'Q\$num. In the context of $topic, which principle is being applied?',
-        'Q\$num. What is the relationship between $topic and the given scenario?',
+        'Q\$num. In the context of $topic and $relatedTopic, which principle is being applied?',
+        'Q\$num. What is the relationship between $topic and $relatedTopic?',
         'Q\$num. Which formula correctly represents $topic?',
-        'Q\$num. What happens to $topic when the given conditions change?',
+        'Q\$num. What happens to $topic when $relatedTopic changes?',
         'Q\$num. Which law or principle governs $topic?',
         'Q\$num. What is the SI unit of $topic?',
         'Q\$num. In $topic, which factor determines the magnitude?',
-        'Q\$num. What is the direction of $topic in the given situation?',
+        'Q\$num. What is the direction of $topic in relation to $relatedTopic?',
         'Q\$num. Which statement best describes $topic?',
+        'Q\$num. How does $topic relate to $relatedTopic?',
+        'Q\$num. Which property of $topic is most significant?',
+        'Q\$num. What is the effect of $relatedTopic on $topic?',
+        'Q\$num. Which experiment demonstrates $topic?',
+        'Q\$num. What is the physical significance of $topic?',
       ];
     } else if (subjectId == 'chemistry') {
       return [
         'Q\$num. Which of the following is correct about $topic?',
         'Q\$num. In $topic, what is the correct order or sequence?',
         'Q\$num. Which reaction type is involved in $topic?',
-        'Q\$num. What is the product formed in $topic?',
+        'Q\$num. What is the product formed when $topic reacts with $relatedTopic?',
         'Q\$num. Which reagent is used for $topic?',
         'Q\$num. What is the mechanism involved in $topic?',
         'Q\$num. Which statement is true regarding $topic?',
         'Q\$num. What is the IUPAC name for $topic?',
         'Q\$num. Which property is characteristic of $topic?',
         'Q\$num. What is the correct formula for $topic?',
+        'Q\$num. How does $topic differ from $relatedTopic?',
+        'Q\$num. Which condition favors $topic?',
+        'Q\$num. What is the relationship between $topic and $relatedTopic?',
+        'Q\$num. Which factor affects $topic?',
+        'Q\$num. What is the role of $relatedTopic in $topic?',
       ];
     } else if (subjectId == 'mathematics') {
       return [
@@ -755,6 +734,11 @@ class PaperViewerScreen extends StatelessWidget {
         'Q\$num. Which formula is correct for $topic?',
         'Q\$num. What is the domain of $topic?',
         'Q\$num. Which statement is true about $topic?',
+        'Q\$num. How is $topic related to $relatedTopic?',
+        'Q\$num. What is the range of $topic?',
+        'Q\$num. Which method is used to solve $topic?',
+        'Q\$num. What is the geometric interpretation of $topic?',
+        'Q\$num. Which condition is necessary for $topic?',
       ];
     } else {
       return [
@@ -768,88 +752,307 @@ class PaperViewerScreen extends StatelessWidget {
         'Q\$num. What is the role of $topic?',
         'Q\$num. Which condition is associated with $topic?',
         'Q\$num. What is the mechanism of $topic?',
+        'Q\$num. How does $topic interact with $relatedTopic?',
+        'Q\$num. What is the relationship between $topic and $relatedTopic?',
+        'Q\$num. Which factor regulates $topic?',
+        'Q\$num. What is the importance of $topic in $relatedTopic?',
+        'Q\$num. How is $topic different from $relatedTopic?',
       ];
     }
   }
 
-  List<String> _generateOptions(String subjectId) {
+  List<String> _generateOptions(String subjectId, int questionNum) {
     final topics = _getChapterTopics();
     final is90Match = paperType == '90match';
     
     if (is90Match) {
-      // Generate more realistic options from subject topics
-      final allTopics = _getSubjectLevelTopics(subjectId);
+      // Generate more realistic options from all subjects for 90% match papers
+      final allSubjects = DataService.getSubjects();
+      final allOptions = <String>[];
+      
+      // Collect topics from all subjects
+      for (var subject in allSubjects) {
+        final subjectTopics = AIQuestionService.getAllSubjectTopics(subject.id);
+        allOptions.addAll(subjectTopics);
+      }
+      
+      // If not enough topics, use chapter topics
+      if (allOptions.length < 4) {
+        allOptions.addAll(_getSubjectLevelTopics(subjectId));
+      }
+      
+      // Generate unique options
+      final baseIndex = (questionNum * 7) % allOptions.length;
       return [
-        'Option A: ${allTopics[(DateTime.now().millisecond) % allTopics.length]}',
-        'Option B: ${allTopics[(DateTime.now().millisecond + 1) % allTopics.length]}',
-        'Option C: ${allTopics[(DateTime.now().millisecond + 2) % allTopics.length]}',
-        'Option D: ${allTopics[(DateTime.now().millisecond + 3) % allTopics.length]}',
+        'Option A: ${allOptions[baseIndex % allOptions.length]}',
+        'Option B: ${allOptions[(baseIndex + questionNum * 3) % allOptions.length]}',
+        'Option C: ${allOptions[(baseIndex + questionNum * 5) % allOptions.length]}',
+        'Option D: ${allOptions[(baseIndex + questionNum * 11) % allOptions.length]}',
       ];
     }
     
     return [
-      'Option A: ${_getRandomConcept()}',
-      'Option B: ${_getRandomConcept()}',
-      'Option C: ${_getRandomConcept()}',
-      'Option D: ${_getRandomConcept()}',
+      'Option A: ${_getRandomConcept(questionNum)}',
+      'Option B: ${_getRandomConcept(questionNum + 1)}',
+      'Option C: ${_getRandomConcept(questionNum + 2)}',
+      'Option D: ${_getRandomConcept(questionNum + 3)}',
     ];
   }
 
   // Section A - Very Short Answer (1 mark)
   String _generateVeryShortAnswer(String subjectId, int num) {
     final topics = _getChapterTopics();
-    final topic = topics[(num - 1) % topics.length];
+    // Use different calculation to avoid repetition
+    final topicIndex = ((num - 1) * 3 + 7) % topics.length;
+    final topic = topics[topicIndex];
     final questions = _getVeryShortAnswerQuestions(subjectId, topic);
-    return questions[(num - 1) % questions.length];
+    final questionIndex = ((num - 1) * 5 + 11) % questions.length;
+    return questions[questionIndex];
   }
 
   // Section B - Short Answer (2 marks) - Q21-Q30
   String _generateShortAnswer(String subjectId, int num) {
     final topics = _getChapterTopics();
-    final topic = topics[(num - 21) % topics.length];
+    // Use different calculation to avoid repetition
+    final topicIndex = ((num - 21) * 7 + 13) % topics.length;
+    final topic = topics[topicIndex];
+    
+    if (paperType == '90match') {
+      // Use AI service to generate questions
+      return AIQuestionService.generateShortAnswer(subjectId, num, topic);
+    }
+    
     final questions = _getShortAnswerQuestions(subjectId, topic);
-    return questions[(num - 21) % questions.length];
+    final questionIndex = ((num - 21) * 3 + 17) % questions.length;
+    return questions[questionIndex];
   }
 
   // Section C - Long Answer I (3 marks) - Q31-Q40
   String _generateLongAnswer(String subjectId, int num) {
     final topics = _getChapterTopics();
-    final topic = topics[(num - 31) % topics.length];
+    final allTopics = _getSubjectLevelTopics(subjectId);
+    // Use different calculation to avoid repetition
+    final topicIndex = ((num - 31) * 11 + 19) % topics.length;
+    final topic = topics[topicIndex];
+    final relatedTopic = allTopics[((num - 31) * 13 + 23) % allTopics.length];
+    
+    if (paperType == '90match') {
+      // Use AI service to generate questions
+      return AIQuestionService.generateLongAnswer(subjectId, num, topic, relatedTopic);
+    }
+    
     final questions = _getLongAnswerQuestions(subjectId, topic);
-    return questions[(num - 31) % questions.length];
+    final questionIndex = ((num - 31) * 7 + 23) % questions.length;
+    return questions[questionIndex];
   }
 
   // Section D - Long Answer II (4 marks) - Q41-Q45
   String _generateLongAnswerII(String subjectId, int num) {
     final topics = _getChapterTopics();
-    final topic = topics[(num - 41) % topics.length];
+    final allTopics = _getSubjectLevelTopics(subjectId);
+    // Use different calculation to avoid repetition
+    final topicIndex = ((num - 41) * 13 + 29) % topics.length;
+    final topic = topics[topicIndex];
+    final relatedTopic = allTopics[((num - 41) * 17 + 37) % allTopics.length];
+    
+    if (paperType == '90match') {
+      // Use AI service to generate questions
+      return AIQuestionService.generateLongAnswer(subjectId, num, topic, relatedTopic);
+    }
+    
     final questions = _getLongAnswerIIQuestions(subjectId, topic);
-    return questions[(num - 41) % questions.length];
+    final questionIndex = ((num - 41) * 11 + 31) % questions.length;
+    return questions[questionIndex];
   }
 
   // Section E - Case-based Question (5 marks) - Q46-Q50
   String _generateCaseBasedQuestion(String subjectId, int num) {
     final topics = _getChapterTopics();
-    final topic = topics[(num - 46) % topics.length];
+    // Use different calculation to avoid repetition
+    final topicIndex = ((num - 46) * 17 + 37) % topics.length;
+    final topic = topics[topicIndex];
     return _getCaseBasedQuestionText(subjectId, topic);
   }
 
   String _generateVeryLongAnswer(String subjectId, int num) {
     final topics = _getChapterTopics();
-    return 'Q$num. Answer the following questions related to $_paperName:';
+    final topic = topics[(num - 46) % topics.length];
+    final allTopics = _getSubjectLevelTopics(subjectId);
+    final relatedTopic = allTopics[(num * 3) % allTopics.length];
+    
+    if (paperType == '90match') {
+      // Use AI service to generate questions
+      return AIQuestionService.generateVeryLongAnswer(subjectId, num, topic, relatedTopic);
+    }
+    
+    final questionTemplates = _getVeryLongAnswerTemplates(subjectId, topic, relatedTopic);
+    return questionTemplates[(num - 46) % questionTemplates.length].replaceAll('\$num', '$num');
   }
 
-  List<Map<String, dynamic>> _generateSubQuestions(String subjectId) {
-    return [
-      {
-        'question': 'Explain the main concept with examples.',
+  List<String> _getVeryLongAnswerTemplates(String subjectId, String topic, String relatedTopic) {
+    if (subjectId == 'physics') {
+      return [
+        'Q\$num. A student is studying $topic and its relationship with $relatedTopic. Answer the following:',
+        'Q\$num. Consider a scenario involving $topic. Based on this, answer the following questions:',
+        'Q\$num. An experiment was conducted to study $topic and $relatedTopic. Answer the following:',
+        'Q\$num. Explain the concept of $topic and its connection to $relatedTopic. Answer:',
+        'Q\$num. A problem related to $topic requires understanding of $relatedTopic. Answer:',
+        'Q\$num. Discuss $topic in detail and relate it to $relatedTopic. Answer:',
+        'Q\$num. Analyze the principles of $topic and their application in $relatedTopic. Answer:',
+        'Q\$num. Compare and contrast $topic with $relatedTopic. Answer:',
+      ];
+    } else if (subjectId == 'chemistry') {
+      return [
+        'Q\$num. A reaction involving $topic and $relatedTopic was observed. Answer the following:',
+        'Q\$num. Explain the mechanism of $topic and its relationship with $relatedTopic. Answer:',
+        'Q\$num. A compound related to $topic shows properties of $relatedTopic. Answer:',
+        'Q\$num. Discuss $topic and its applications in $relatedTopic. Answer:',
+        'Q\$num. Analyze the structure and properties of $topic in context of $relatedTopic. Answer:',
+        'Q\$num. A synthesis process uses $topic to produce $relatedTopic. Answer:',
+        'Q\$num. Compare the behavior of $topic and $relatedTopic. Answer:',
+        'Q\$num. Explain how $topic influences $relatedTopic. Answer:',
+      ];
+    } else if (subjectId == 'mathematics') {
+      return [
+        'Q\$num. Solve a problem involving $topic and $relatedTopic. Answer the following:',
+        'Q\$num. Apply the concepts of $topic to solve problems related to $relatedTopic. Answer:',
+        'Q\$num. A mathematical model uses $topic and $relatedTopic. Answer:',
+        'Q\$num. Derive and explain the relationship between $topic and $relatedTopic. Answer:',
+        'Q\$num. Use $topic to analyze and solve problems in $relatedTopic. Answer:',
+        'Q\$num. Prove a theorem connecting $topic and $relatedTopic. Answer:',
+        'Q\$num. Apply $topic to find solutions in $relatedTopic. Answer:',
+        'Q\$num. Analyze the mathematical properties of $topic and $relatedTopic. Answer:',
+      ];
+    } else {
+      return [
+        'Q\$num. A biological process involving $topic and $relatedTopic was studied. Answer:',
+        'Q\$num. Explain the mechanism of $topic and its role in $relatedTopic. Answer:',
+        'Q\$num. Discuss the relationship between $topic and $relatedTopic. Answer:',
+        'Q\$num. Analyze how $topic affects $relatedTopic. Answer:',
+        'Q\$num. Compare the functions of $topic and $relatedTopic. Answer:',
+        'Q\$num. Explain the significance of $topic in context of $relatedTopic. Answer:',
+        'Q\$num. A study was conducted on $topic and $relatedTopic. Answer:',
+        'Q\$num. Discuss the interaction between $topic and $relatedTopic. Answer:',
+      ];
+    }
+  }
+
+  List<Map<String, dynamic>> _generateSubQuestions(String subjectId, int questionNum) {
+    final topics = _getChapterTopics();
+    final topic = topics[(questionNum * 7) % topics.length];
+    
+    if (paperType == '90match') {
+      // Generate AI-based sub-questions
+      final subject = DataService.getSubjectById(subjectId);
+      final chapters = subject?.chapters ?? [];
+      final chapterContext = chapters.isNotEmpty 
+          ? chapters[(questionNum * 3) % chapters.length].name 
+          : topic;
+      
+      final subQuestions = _getAISubQuestions(subjectId, topic, chapterContext);
+      return subQuestions.take(2).map((q) => {
+        'question': q,
         'options': null,
-      },
-      {
-        'question': 'Discuss its applications and importance.',
-        'options': null,
-      },
-    ];
+      }).toList();
+    }
+    
+    final subQuestionTemplates = _getSubQuestionTemplates(subjectId, topic);
+    final selectedTemplates = subQuestionTemplates.take(2).toList();
+    
+    return selectedTemplates.map((template) => {
+      'question': template,
+      'options': null,
+    }).toList();
+  }
+
+  List<String> _getAISubQuestions(String subjectId, String topic, String chapter) {
+    List<String> templates;
+    if (subjectId == 'physics') {
+      templates = [
+        'Explain the fundamental principles of \$topic from \$chapter with relevant examples.',
+        'Discuss the applications of \$topic from \$chapter in real-world scenarios.',
+        'Derive the mathematical relationship governing \$topic in \$chapter.',
+        'Compare \$topic with similar concepts from \$chapter and highlight differences.',
+        'Analyze the factors that influence \$topic in \$chapter.',
+      ];
+    } else if (subjectId == 'chemistry') {
+      templates = [
+        'Explain the chemical principles underlying \$topic in \$chapter.',
+        'Discuss the mechanism and steps involved in \$topic from \$chapter.',
+        'Describe the conditions required for \$topic to occur in \$chapter.',
+        'Compare \$topic with related chemical processes from \$chapter.',
+        'Analyze the factors affecting the rate of \$topic in \$chapter.',
+      ];
+    } else if (subjectId == 'mathematics') {
+      templates = [
+        'State and prove the theorem related to \$topic in \$chapter.',
+        'Solve a problem using the concepts of \$topic from \$chapter.',
+        'Derive the formula for \$topic in \$chapter step by step.',
+        'Apply \$topic to solve a real-world problem from \$chapter.',
+        'Prove the properties of \$topic in \$chapter mathematically.',
+      ];
+    } else {
+      templates = [
+        'Explain the biological significance of \$topic in \$chapter.',
+        'Describe the process and mechanism of \$topic from \$chapter.',
+        'Discuss the factors that regulate \$topic in \$chapter.',
+        'Compare \$topic with similar biological processes from \$chapter.',
+        'Analyze the role of \$topic in \$chapter.',
+      ];
+    }
+    
+    // Replace placeholders
+    return templates.map((template) => 
+      template.replaceAll('\$topic', topic).replaceAll('\$chapter', chapter)
+    ).toList();
+  }
+
+  List<String> _getSubQuestionTemplates(String subjectId, String topic) {
+    if (subjectId == 'physics') {
+      return [
+        'Explain the fundamental principles of $topic with relevant examples.',
+        'Discuss the applications of $topic in real-world scenarios.',
+        'Derive the mathematical relationship governing $topic.',
+        'Compare $topic with similar concepts and highlight differences.',
+        'Analyze the factors that influence $topic.',
+        'Describe the experimental methods used to study $topic.',
+        'Explain the physical significance of $topic.',
+        'Discuss the limitations and scope of $topic.',
+      ];
+    } else if (subjectId == 'chemistry') {
+      return [
+        'Explain the chemical principles underlying $topic.',
+        'Discuss the mechanism and steps involved in $topic.',
+        'Describe the conditions required for $topic to occur.',
+        'Compare $topic with related chemical processes.',
+        'Analyze the factors affecting the rate of $topic.',
+        'Explain the industrial applications of $topic.',
+        'Discuss the environmental impact of $topic.',
+        'Describe the methods to identify and characterize $topic.',
+      ];
+    } else if (subjectId == 'mathematics') {
+      return [
+        'State and prove the theorem related to $topic.',
+        'Solve a problem using the concepts of $topic.',
+        'Derive the formula for $topic step by step.',
+        'Apply $topic to solve a real-world problem.',
+        'Prove the properties of $topic mathematically.',
+        'Explain the geometric interpretation of $topic.',
+        'Discuss the applications of $topic in different fields.',
+        'Analyze the conditions under which $topic is valid.',
+      ];
+    } else {
+      return [
+        'Explain the biological significance of $topic.',
+        'Describe the process and mechanism of $topic.',
+        'Discuss the factors that regulate $topic.',
+        'Compare $topic with similar biological processes.',
+        'Analyze the role of $topic in maintaining homeostasis.',
+        'Explain how $topic contributes to the overall function.',
+        'Discuss the disorders related to $topic.',
+        'Describe the experimental evidence supporting $topic.',
+      ];
+    }
   }
 
   List<Map<String, dynamic>> _generateCaseSubQuestions(String subjectId) {
@@ -1107,30 +1310,6 @@ class PaperViewerScreen extends StatelessWidget {
     }
   }
 
-  Map<int, String> _generateAnswerKey() {
-    final answers = <int, String>{};
-    final totalQuestions = 50; // Both types have 50 questions (CBSE 2026 pattern)
-    
-    if (paperType == 'previous' && year != null) {
-      // Previous year papers: All questions are subjective (50 questions)
-      for (int i = 1; i <= totalQuestions; i++) {
-        answers[i] = 'See solution';
-      }
-    } else {
-      // 90% Match papers: MCQs (Q1-Q20) + Subjective (Q21-Q50)
-      final mcqCount = 20;
-      for (int i = 1; i <= totalQuestions; i++) {
-        if (i <= mcqCount) {
-          // MCQ answers (Section A: Q1-Q20)
-          answers[i] = ['A', 'B', 'C', 'D'][i % 4];
-        } else {
-          // Subjective answers (Section B-E: Q21-Q50)
-          answers[i] = 'See solution';
-        }
-      }
-    }
-    return answers;
-  }
 
   List<String> _getChapterTopics() {
     final subjectId = _subjectId;
@@ -1276,109 +1455,10 @@ class PaperViewerScreen extends StatelessWidget {
     }
   }
 
-  String _getRandomConcept() {
+  String _getRandomConcept(int seed) {
     final concepts = _getChapterTopics();
-    return concepts[DateTime.now().millisecond % concepts.length];
+    return concepts[seed % concepts.length];
   }
 
-  void _showSolutions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.9,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade700,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Text(
-                    'Detailed Solutions',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                controller: scrollController,
-                padding: const EdgeInsets.all(16),
-                children: [
-                  ...List.generate(paperType == '90match' ? 50 : 25, (index) {
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Question ${index + 1} Solution',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _generateSolution(index + 1),
-                              style: const TextStyle(fontSize: 14, height: 1.6),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _generateSolution(int questionNum) {
-    final mcqCount = paperType == '90match' ? 20 : 10;
-    if (questionNum <= mcqCount) {
-      return 'The correct answer is option ${['A', 'B', 'C', 'D'][questionNum % 4]}. '
-          'This is because the concept relates directly to $_paperName and follows '
-          'the fundamental principles discussed in this ${subject != null ? 'subject' : 'chapter'}. The other options are '
-          'incorrect as they either represent different concepts or are not applicable '
-          'in this context.';
-    } else {
-      return 'To answer this question, we need to consider the key aspects of '
-          '$_paperName. The solution involves:\n\n'
-          '1. Understanding the fundamental concept\n'
-          '2. Applying the relevant principles\n'
-          '3. Providing examples or calculations as needed\n'
-          '4. Concluding with the final answer\n\n'
-          'This approach ensures a comprehensive answer that demonstrates '
-          'thorough understanding of the topic.';
-    }
-  }
 }
 
