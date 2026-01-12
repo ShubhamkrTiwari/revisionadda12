@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../services/data_service.dart';
 import '../models/subject.dart';
 import '../utils/icon_helper.dart';
+import 'package:revisionadda12/services/subscription_service.dart';
 import 'puzzle_level_screen.dart';
+import 'subscription_screen.dart';
 
 class GameScreen extends StatelessWidget {
   const GameScreen({super.key});
@@ -202,13 +204,58 @@ class GameScreen extends StatelessWidget {
         ),
         color: cardColor,
         child: InkWell(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => PuzzleLevelScreen(subject: subject),
-              ),
-            );
+          onTap: () async {
+            final isSubscribed = await SubscriptionService.isSubscribed();
+            
+            if (!isSubscribed) {
+              // Show subscription dialog
+              final shouldSubscribe = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Premium Feature'),
+                  content: const Text('Unlock all games and features with a premium subscription!'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Maybe Later'),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6B46C1),
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Subscribe Now'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (shouldSubscribe == true) {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SubscriptionScreen(),
+                  ),
+                );
+                // Check subscription status again after returning from subscription screen
+                final isNowSubscribed = await SubscriptionService.isSubscribed();
+                if (!isNowSubscribed) {
+                  return;
+                }
+              } else {
+                return;
+              }
+            }
+            
+            if (context.mounted) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PuzzleLevelScreen(subject: subject),
+                ),
+              );
+            }
           },
           borderRadius: BorderRadius.circular(20),
           child: Container(
