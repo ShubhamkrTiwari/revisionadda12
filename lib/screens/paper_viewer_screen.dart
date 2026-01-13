@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/subject.dart';
 import '../services/data_service.dart';
 import '../services/ai_question_service.dart';
+import 'package:share_plus/share_plus.dart';
 
 class PaperViewerScreen extends StatelessWidget {
   final Chapter? chapter; // Optional - for chapter-specific papers
@@ -46,7 +47,11 @@ class PaperViewerScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.share),
             onPressed: () {
-              // TODO: Share paper
+              final String message = 'Check out this ${paperType == '90match' ? '90% Match Paper' : 'Previous Year Paper'} for $subjectName - $_paperName';
+              Share.share(
+                message,
+                subject: 'Revision Adda - $subjectName Paper',
+              );
             },
           ),
         ],

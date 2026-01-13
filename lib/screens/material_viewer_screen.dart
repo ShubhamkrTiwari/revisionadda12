@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/subject.dart';
 import '../utils/constants.dart';
+import 'package:share_plus/share_plus';
 
 class MaterialViewerScreen extends StatelessWidget {
   final StudyMaterial material;
@@ -25,7 +26,11 @@ class MaterialViewerScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.share),
             onPressed: () {
-              // TODO: Implement share
+              final String message = 'Check out this ${material.type} - ${material.title} on Revision Adda App';
+              Share.share(
+                message,
+                subject: 'Revision Adda - ${material.title}',
+              );
             },
           ),
         ],
