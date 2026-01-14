@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import '../utils/constants.dart';
 import '../services/subscription_service.dart';
 import 'subscription_screen.dart';
@@ -50,6 +52,81 @@ class _SettingsScreenState extends State<SettingsScreen> {
         value ? ThemeMode.system : (currentBrightness == Brightness.dark ? ThemeMode.dark : ThemeMode.light),
       );
     }
+  }
+
+  Future<void> _shareApp() async {
+    const appUrl = 'https://play.google.com/store/apps/details?id=com.example.revisionadda12';
+    const message = 'Check out this amazing app - Revision Adda! $appUrl';
+    
+    await Share.share(
+      message,
+      subject: 'Revision Adda - Learn Better',
+    );
+  }
+
+  Widget _buildSettingCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: Colors.grey),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -107,6 +184,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            // Share App Card
+            _buildSettingCard(
+              context,
+              icon: Icons.share,
+              title: 'Share App',
+              subtitle: 'Share with friends & family',
+              iconColor: Colors.blue,
+              onTap: _shareApp,
+            ),
+            const SizedBox(height: 16),
+            
             // Appearance Card
             Container(
               decoration: BoxDecoration(
@@ -569,24 +657,263 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildFeatureItem(String text, Color color) {
     return Padding(
-      padding: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         children: [
           Icon(
-            Icons.circle,
-            size: 6,
+            Icons.check_circle,
             color: color,
+            size: 16,
           ),
           const SizedBox(width: 8),
           Text(
             text,
             style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[700],
+              fontSize: 14,
+              color: color,
             ),
           ),
         ],
       ),
     );
   }
+
+  builder: (context, snapshot) {
+    final completedSets = snapshot.data ?? 0;
+    final freeLimit = SubscriptionService.getFreeSetsLimit();
+    return _buildFeatureItem(
+      '${completedSets}/$freeLimit MCQ Sets',
+      Colors.grey,
+    );
+  },
+  _buildFeatureItem(
+    '0 Games (Subscription Required)',
+    Colors.grey,
+  ),
+),
+const SizedBox(height: 16),
+SizedBox(
+  width: double.infinity,
+  child: ElevatedButton.icon(
+    onPressed: () async {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SubscriptionScreen(
+            onSubscribe: () {
+              _loadSubscriptionStatus();
+            },
+          ),
+        ),
+      );
+      _loadSubscriptionStatus();
+    },
+    icon: const Icon(Icons.star),
+    label: const Text(
+      'Subscribe Now - ₹149',
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    style: ElevatedButton.styleFrom(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      backgroundColor: Colors.amber,
+      foregroundColor: Colors.black,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    ),
+  ),
+),
+const SizedBox(height: 16),
+// App Information Card
+Card(
+  elevation: 2,
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(16),
+  ),
+  child: Padding(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.info_outline,
+                color: Colors.blue,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'App Information',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        // App Name
+        Row(
+          children: [
+            const Icon(
+              Icons.school,
+              color: Colors.blue,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'RevisionAdda',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.blue,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Description
+        Text(
+          'Your Complete Learning Companion for CBSE Class 12',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[700],
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Version
+        Row(
+          children: [
+            const Icon(
+              Icons.tag,
+              size: 16,
+              color: Colors.grey,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Version 1.0.0',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  ),
+),
+const SizedBox(height: 16),
+// More Options Card
+Card(
+  elevation: 2,
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(16),
+  ),
+  child: Column(
+    children: [
+      // Share App
+      ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.blue.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(
+            Icons.share,
+            color: Colors.blue,
+            size: 24,
+          ),
+        ),
+        title: const Text(
+          'Share App',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        subtitle: const Text(
+          'Tell your friends about us',
+          style: TextStyle(fontSize: 12),
+        ),
+        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+        onTap: () {
+          Share.share(
+            'Check out Revision Adda - The best app for CBSE Class 12 exam preparation! Download now: https://play.google.com/store/apps/details?id=com.revisionadda.app',
+            subject: 'Revision Adda - CBSE Class 12 Preparation App',
+          );
+        },
+      ),
+      const Divider(height: 1, indent: 16, endIndent: 16),
+      // Rate Us
+      ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.amber.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(
+            Icons.star,
+            color: Colors.amber,
+            size: 24,
+          ),
+        ),
+        title: const Text(
+          'Rate Us',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        subtitle: const Text(
+          'Love our app? Give us 5 stars!',
+          style: TextStyle(fontSize: 12),
+        ),
+        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+        onTap: () {
+          // TODO: Add rate us functionality
+        },
+      ),
+    ],
+  ),
+),
+],
+),
+),
+);
+
+Widget _buildFeatureItem(String text, Color color) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4.0),
+    child: Row(
+      children: [
+        Icon(
+          Icons.check_circle,
+          color: color,
+          size: 16,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 14,
+            color: color,
+          ),
+        ),
+      ],
+    ),
+  );
 }
