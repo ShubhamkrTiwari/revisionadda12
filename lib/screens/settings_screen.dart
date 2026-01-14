@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-import '../utils/constants.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../utils/theme_provider.dart';
 import '../services/subscription_service.dart';
 import 'subscription_screen.dart';
 
@@ -15,8 +18,9 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _useSystemTheme = true;
   bool _isSubscribed = false;
+  final int completedSets = 0;
+  final int freeLimit = 5;
 
   @override
   void initState() {
@@ -26,31 +30,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadSubscriptionStatus() async {
     final subscribed = await SubscriptionService.isSubscribed();
-    setState(() {
-      _isSubscribed = subscribed;
-    });
-  }
-
-  void _toggleDarkMode(bool value) {
-    setState(() {
-      _useSystemTheme = false;
-    });
-    if (widget.onThemeModeChanged != null) {
-      widget.onThemeModeChanged!(
-        value ? ThemeMode.dark : ThemeMode.light,
-      );
+    if (mounted) {
+      setState(() {
+        _isSubscribed = subscribed;
+      });
     }
   }
 
-  void _toggleSystemTheme(bool value) {
-    setState(() {
-      _useSystemTheme = value;
-    });
+  Future<void> _toggleDarkMode(bool value, ThemeProvider themeProvider) async {
+    await themeProvider.setThemeMode(value ? ThemeMode.dark : ThemeMode.light);
     if (widget.onThemeModeChanged != null) {
-      final currentBrightness = Theme.of(context).brightness;
-      widget.onThemeModeChanged!(
-        value ? ThemeMode.system : (currentBrightness == Brightness.dark ? ThemeMode.dark : ThemeMode.light),
-      );
+      widget.onThemeModeChanged!(themeProvider.themeMode);
+    }
+  }
+
+  Future<void> _toggleSystemTheme(bool value, ThemeProvider themeProvider) async {
+    if (value) {
+      await themeProvider.setThemeMode(ThemeMode.system);
+    } else {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      await themeProvider.setThemeMode(isDark ? ThemeMode.dark : ThemeMode.light);
+    }
+    if (widget.onThemeModeChanged != null) {
+      widget.onThemeModeChanged!(themeProvider.themeMode);
     }
   }
 
@@ -64,612 +66,200 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSettingCard(
-    BuildContext context, {
+  Widget _buildSettingCard({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String subtitle,
     required Color iconColor,
-    required VoidCallback onTap,
+    Widget? trailing,
+    VoidCallback? onTap,
+    bool showDivider = true,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: colorScheme.outline.withOpacity(0.1),
+          width: 1,
         ),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: iconColor, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: iconColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                    child: Icon(icon, color: iconColor, size: 20),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  if (trailing != null) trailing,
+                ],
               ),
-              const Icon(Icons.chevron_right, color: Colors.grey),
+              if (showDivider && onTap != null)
+                const Divider(height: 24, thickness: 1),
             ],
+          ),
+        ),
+      ),
+    ).animate().fadeIn(duration: 200.ms).slideX(
+          begin: 0.1,
+          end: 0,
+          curve: Curves.easeOutQuart,
+        );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4.0, top: 24, bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 12),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: color,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const Expanded(
+            child: Divider(
+              height: 1,
+              thickness: 1,
+              indent: 12,
+              endIndent: 0,
+              color: Colors.transparent,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubscribeButton(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            colorScheme.primary,
+            colorScheme.primary.withOpacity(0.8),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.primary.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SubscriptionScreen()),
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Text(
+          'Upgrade to Pro',
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: colorScheme.onPrimary,
+            letterSpacing: 0.2,
           ),
         ),
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget _buildThemeToggle(
+    BuildContext context, {
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    String? subtitle,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
     
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Theme.of(context).colorScheme.primary,
-                Theme.of(context).colorScheme.secondary,
-              ],
-            ),
-          ),
-        ),
-        leading: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-        title: const Text(
-          'Settings',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            letterSpacing: 0.5,
-          ),
-        ),
+    return _buildSettingCard(
+      context: context,
+      icon: value ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+      title: title,
+      subtitle: subtitle ?? (value ? 'Dark theme enabled' : 'Light theme enabled'),
+      iconColor: value ? Colors.deepPurple : Colors.amber,
+      trailing: Switch.adaptive(
+        value: value,
+        onChanged: onChanged,
+        activeColor: colorScheme.primary,
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Theme.of(context).colorScheme.primary.withOpacity(0.05),
-              Theme.of(context).scaffoldBackgroundColor,
-            ],
-          ),
-        ),
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            // Share App Card
-            _buildSettingCard(
-              context,
-              icon: Icons.share,
-              title: 'Share App',
-              subtitle: 'Share with friends & family',
-              iconColor: Colors.blue,
-              onTap: _shareApp,
-            ),
-            const SizedBox(height: 16),
-            
-            // Appearance Card
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.orange.shade400,
-                                Colors.orange.shade600,
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.palette,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Appearance',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  const SizedBox(height: 16),
-                  // System Theme Toggle (First)
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.purple.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.phone_android,
-                          color: Colors.purple,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'System Theme',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Follow system settings',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Switch(
-                        value: _useSystemTheme,
-                        onChanged: _toggleSystemTheme,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // Dark Mode Toggle (Only if system theme is off)
-                  if (!_useSystemTheme)
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: (isDark ? Colors.blue : Colors.yellow).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            isDark ? Icons.dark_mode : Icons.light_mode,
-                            color: isDark ? Colors.blue : Colors.orange,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                isDark ? 'Dark Mode' : 'Light Mode',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                isDark
-                                    ? 'Switch to light theme'
-                                    : 'Switch to dark theme',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Switch(
-                          value: isDark,
-                          onChanged: _toggleDarkMode,
-                        ),
-                      ],
-                    ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Subscription Card
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: _isSubscribed
-                              ? Colors.green.withOpacity(0.1)
-                              : Colors.amber.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          _isSubscribed ? Icons.verified : Icons.star,
-                          color: _isSubscribed ? Colors.green : Colors.amber,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _isSubscribed ? 'Premium Active' : 'Subscription',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _isSubscribed
-                                  ? 'All features unlocked'
-                                  : 'Unlock all features',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (_isSubscribed)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.green,
-                              width: 1,
-                            ),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.check_circle,
-                                color: Colors.green,
-                                size: 16,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                'Active',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  if (_isSubscribed) ...[
-                    // Subscription active info
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.green.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.lock_open,
-                                color: Colors.green,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'All Features Unlocked',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.green,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          _buildFeatureItem('✓ All MCQ Sets', Colors.green),
-                          _buildFeatureItem('✓ All Games', Colors.green),
-                          _buildFeatureItem('✓ No Ads', Colors.green),
-                          _buildFeatureItem('✓ Unlimited Access', Colors.green),
-                        ],
-                      ),
-                    ),
-                  ] else ...[
-                    // Subscription not active
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.amber.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.lock,
-                                color: Colors.amber,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Limited Access',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.amber,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          FutureBuilder<int>(
-                            future: SubscriptionService.getCompletedSetsCount(),
-                            builder: (context, snapshot) {
-                              final completedSets = snapshot.data ?? 0;
-                              final freeLimit = SubscriptionService.getFreeSetsLimit();
-                              return _buildFeatureItem(
-                                '${completedSets}/$freeLimit MCQ Sets',
-                                Colors.grey,
-                              );
-                            },
-                          ),
-                          _buildFeatureItem(
-                            '0 Games (Subscription Required)',
-                            Colors.grey,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SubscriptionScreen(
-                                onSubscribe: () {
-                                  _loadSubscriptionStatus();
-                                },
-                              ),
-                            ),
-                          );
-                          _loadSubscriptionStatus();
-                        },
-                        icon: const Icon(Icons.star),
-                        label: const Text(
-                          'Subscribe Now - ₹149',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: Colors.amber,
-                          foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          // App Information Card
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.info_outline,
-                          color: Colors.blue,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'App Information',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // App Name
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.school,
-                        color: Colors.blue,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'RevisionAdda',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  // Description
-                  Text(
-                    'Your Complete Learning Companion for CBSE Class 12',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Version
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.tag,
-                        size: 16,
-                        color: Colors.grey,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Version 1.0.0',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-        ),
-      ),
+      showDivider: false,
     );
   }
 
   Widget _buildFeatureItem(String text, Color color) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(
-            Icons.check_circle,
-            color: color,
-            size: 16,
-          ),
+          Icon(Icons.check_circle, size: 16, color: color),
           const SizedBox(width: 8),
           Text(
             text,
-            style: TextStyle(
-              fontSize: 14,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
               color: color,
             ),
           ),
@@ -678,242 +268,376 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  builder: (context, snapshot) {
-    final completedSets = snapshot.data ?? 0;
-    final freeLimit = SubscriptionService.getFreeSetsLimit();
-    return _buildFeatureItem(
-      '${completedSets}/$freeLimit MCQ Sets',
-      Colors.grey,
-    );
-  },
-  _buildFeatureItem(
-    '0 Games (Subscription Required)',
-    Colors.grey,
-  ),
-),
-const SizedBox(height: 16),
-SizedBox(
-  width: double.infinity,
-  child: ElevatedButton.icon(
-    onPressed: () async {
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => SubscriptionScreen(
-            onSubscribe: () {
-              _loadSubscriptionStatus();
-            },
+  Widget _buildProfileHeader(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.onSurface.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-      );
-      _loadSubscriptionStatus();
-    },
-    icon: const Icon(Icons.star),
-    label: const Text(
-      'Subscribe Now - ₹149',
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
+        ],
       ),
-    ),
-    style: ElevatedButton.styleFrom(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      backgroundColor: Colors.amber,
-      foregroundColor: Colors.black,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+      child: Row(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: colorScheme.primary.withOpacity(0.1),
+              border: Border.all(
+                color: colorScheme.primary.withOpacity(0.3),
+                width: 2,
+              ),
+            ),
+            child: Icon(
+              Icons.person,
+              size: 32,
+              color: colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome Back!',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'User',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (!_isSubscribed) _buildSubscribeButton(context),
+        ],
       ),
-    ),
-  ),
-),
-const SizedBox(height: 16),
-// App Information Card
-Card(
-  elevation: 2,
-  shape: RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(16),
-  ),
-  child: Padding(
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.info_outline,
-                color: Colors.blue,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'App Information',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        // App Name
-        Row(
-          children: [
-            const Icon(
-              Icons.school,
-              color: Colors.blue,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'RevisionAdda',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.blue,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // Description
-        Text(
-          'Your Complete Learning Companion for CBSE Class 12',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[700],
-          ),
-        ),
-        const SizedBox(height: 16),
-        // Version
-        Row(
-          children: [
-            const Icon(
-              Icons.tag,
-              size: 16,
-              color: Colors.grey,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Version 1.0.0',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-      ],
-    ),
-  ),
-),
-const SizedBox(height: 16),
-// More Options Card
-Card(
-  elevation: 2,
-  shape: RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(16),
-  ),
-  child: Column(
-    children: [
-      // Share App
-      ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Icon(
-            Icons.share,
-            color: Colors.blue,
-            size: 24,
-          ),
-        ),
-        title: const Text(
-          'Share App',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        subtitle: const Text(
-          'Tell your friends about us',
-          style: TextStyle(fontSize: 12),
-        ),
-        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-        onTap: () {
-          Share.share(
-            'Check out Revision Adda - The best app for CBSE Class 12 exam preparation! Download now: https://play.google.com/store/apps/details?id=com.revisionadda.app',
-            subject: 'Revision Adda - CBSE Class 12 Preparation App',
-          );
-        },
-      ),
-      const Divider(height: 1, indent: 16, endIndent: 16),
-      // Rate Us
-      ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.amber.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Icon(
-            Icons.star,
-            color: Colors.amber,
-            size: 24,
-          ),
-        ),
-        title: const Text(
-          'Rate Us',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        subtitle: const Text(
-          'Love our app? Give us 5 stars!',
-          style: TextStyle(fontSize: 12),
-        ),
-        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-        onTap: () {
-          // TODO: Add rate us functionality
-        },
-      ),
-    ],
-  ),
-),
-],
-),
-),
-);
+    ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0);
+  }
 
-Widget _buildFeatureItem(String text, Color color) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4.0),
-    child: Row(
-      children: [
-        Icon(
-          Icons.check_circle,
-          color: color,
-          size: 16,
-        ),
-        const SizedBox(width: 8),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 14,
-            color: color,
+  @override
+  Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
+    final isDark = themeProvider.isDarkMode;
+    final useSystemTheme = themeProvider.isSystemTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Scaffold(
+      backgroundColor: colorScheme.surface,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 200,
+            pinned: true,
+            elevation: 0,
+            backgroundColor: colorScheme.primary,
+            leading: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colorScheme.onPrimary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: IconButton(
+                icon: Icon(Icons.arrow_back, color: colorScheme.onPrimary),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+            flexibleSpace: LayoutBuilder(
+              builder: (context, constraints) {
+                final maxHeight = constraints.maxHeight;
+                final minHeight = kToolbarHeight;
+                final currentScroll = maxHeight - minHeight;
+                final opacity = (currentScroll / (maxHeight - minHeight)).clamp(0.0, 1.0);
+                
+                return Stack(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            colorScheme.primary,
+                            colorScheme.primary.withOpacity(0.8),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: -50,
+                      top: -50,
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: colorScheme.onPrimary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: -30,
+                      top: -30,
+                      child: Container(
+                        width: 150,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          color: colorScheme.onPrimary.withOpacity(0.08),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    Center(
+                      child: Opacity(
+                        opacity: 1 - (opacity * 0.9),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: colorScheme.onPrimary.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.settings,
+                                size: 40,
+                                color: colorScheme.onPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Settings',
+                              style: GoogleFonts.poppins(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w600,
+                                color: colorScheme.onPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+            title: Opacity(
+              opacity: 0,
+              child: Text(
+                'Settings',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: Icon(Icons.info_outline, color: colorScheme.onPrimary),
+                onPressed: () {
+                  showAboutDialog(
+                    context: context,
+                    applicationName: 'Revision Adda',
+                    applicationVersion: '1.0.0',
+                    applicationIcon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.school, size: 32),
+                    ),
+                    children: [
+                      const SizedBox(height: 16),
+                      Text(
+                        'A comprehensive study app for Class 12 students',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
           ),
-        ),
-      ],
-    ),
-  );
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildProfileHeader(context),
+                
+                // Theme Settings
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: _buildSectionHeader(
+                    'Appearance',
+                    Icons.palette_rounded,
+                    colorScheme.primary,
+                  ),
+                ),
+                
+                // System theme toggle
+                _buildSettingCard(
+                  context: context,
+                  icon: Icons.phone_android_rounded,
+                  title: 'Use system theme',
+                  subtitle: 'Match your device\'s theme settings',
+                  iconColor: Colors.blue,
+                  trailing: Switch.adaptive(
+                    value: useSystemTheme,
+                    onChanged: (value) => _toggleSystemTheme(value, themeProvider),
+                    activeColor: colorScheme.primary,
+                  ),
+                ),
+                
+                // Dark mode toggle (only show if not using system theme)
+                if (!useSystemTheme)
+                  _buildThemeToggle(
+                    context,
+                    title: 'Dark Mode',
+                    value: isDark,
+                    onChanged: (value) => _toggleDarkMode(value, themeProvider),
+                  ),
+                
+                // App Settings Section
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: _buildSectionHeader(
+                    'App Settings',
+                    Icons.settings_rounded,
+                    colorScheme.primary,
+                  ),
+                ),
+                
+                // Share App
+                _buildSettingCard(
+                  context: context,
+                  icon: Icons.share_rounded,
+                  title: 'Share App',
+                  subtitle: 'Tell your friends about us',
+                  iconColor: Colors.green,
+                  onTap: _shareApp,
+                ),
+                
+                // Rate App
+                _buildSettingCard(
+                  context: context,
+                  icon: Icons.star_rate_rounded,
+                  title: 'Rate Us',
+                  subtitle: 'Leave a review on the app store',
+                  iconColor: Colors.amber,
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Rate app functionality coming soon!')),
+                    );
+                  },
+                ),
+                
+                // Contact Support
+                _buildSettingCard(
+                  context: context,
+                  icon: Icons.support_agent_rounded,
+                  title: 'Contact Support',
+                  subtitle: 'Need help? Contact our support team',
+                  iconColor: Colors.purple,
+                  onTap: () async {
+                    const email = 'support@revisionadda.com';
+                    final url = 'mailto:$email';
+                    if (await canLaunchUrlString(url)) {
+                      await launchUrlString(url);
+                    } else {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Could not launch email client')),
+                        );
+                      }
+                    }
+                  },
+                ),
+                
+                // About Section
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: _buildSectionHeader(
+                    'About',
+                    Icons.info_rounded,
+                    colorScheme.primary,
+                  ),
+                ),
+                
+                // Privacy Policy
+                _buildSettingCard(
+                  context: context,
+                  icon: Icons.privacy_tip_rounded,
+                  title: 'Privacy Policy',
+                  subtitle: 'Read our privacy policy',
+                  iconColor: Colors.blueGrey,
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Privacy policy coming soon!')),
+                    );
+                  },
+                ),
+                
+                // Terms of Service
+                _buildSettingCard(
+                  context: context,
+                  icon: Icons.description_rounded,
+                  title: 'Terms of Service',
+                  subtitle: 'Read our terms and conditions',
+                  iconColor: Colors.blueGrey,
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Terms of service coming soon!')),
+                    );
+                  },
+                  showDivider: false,
+                ),
+                
+                // Version
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Center(
+                    child: Text(
+                      'Version 1.0.0',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: colorScheme.onSurface.withOpacity(0.5),
+                      ),
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

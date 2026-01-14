@@ -6,9 +6,7 @@ import 'settings_screen.dart';
 import 'exam_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
-  final Function(ThemeMode)? onThemeModeChanged;
-  
-  const MainNavigationScreen({super.key, this.onThemeModeChanged});
+  const MainNavigationScreen({super.key});
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
@@ -27,7 +25,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       const ProgressScreen(),
       const ExamScreen(),
       const GameScreen(),
-      SettingsScreen(onThemeModeChanged: widget.onThemeModeChanged),
+      const SettingsScreen(),
     ]);
   }
 

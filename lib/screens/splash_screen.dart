@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'main_navigation_screen.dart';
+import '../utils/theme_provider.dart';
 
 class SplashScreen extends StatefulWidget {
-  final Function(ThemeMode)? onThemeModeChanged;
-  
-  const SplashScreen({super.key, this.onThemeModeChanged});
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -98,22 +98,21 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     super.dispose();
   }
 
-  _navigateToHome() async {
+  void _navigateToHome() async {
     await Future.delayed(const Duration(seconds: 3));
+    
     if (mounted) {
-      Navigator.pushReplacement(
-        context,
+      Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => MainNavigationScreen(
-            onThemeModeChanged: widget.onThemeModeChanged,
-          ),
+          pageBuilder: (context, animation, secondaryAnimation) => const MainNavigationScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
+            const begin = Offset(1.0, 0.0);
+            const end = Offset.zero;
+            const curve = Curves.easeInOut;
+            var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+            var offsetAnimation = animation.drive(tween);
+            return SlideTransition(position: offsetAnimation, child: child);
           },
-          transitionDuration: const Duration(milliseconds: 500),
         ),
       );
     }
