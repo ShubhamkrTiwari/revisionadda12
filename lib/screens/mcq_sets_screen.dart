@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/subject.dart';
 import '../services/subscription_service.dart';
 import 'mcq_questions_screen.dart';
-import 'subscription_screen.dart';
 
 class MCQSetsScreen extends StatefulWidget {
   final Chapter chapter;
@@ -27,25 +26,16 @@ class _MCQSetsScreenState extends State<MCQSetsScreen> {
   }
 
   Future<void> _loadSubscriptionStatus() async {
-    final subscribed = await SubscriptionService.isSubscribed();
     final completedCount = await SubscriptionService.getCompletedSetsCount();
     setState(() {
-      _isSubscribed = subscribed;
+      _isSubscribed = true;
       _completedSetsCount = completedCount;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: SubscriptionService.isSubscribed(),
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          _isSubscribed = snapshot.data ?? false;
-        }
-        return _buildContent();
-      },
-    );
+    return _buildContent();
   }
 
   Widget _buildContent() {
@@ -101,57 +91,13 @@ class _MCQSetsScreenState extends State<MCQSetsScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
-                  FutureBuilder<bool>(
-                    future: SubscriptionService.isSubscribed(),
-                    builder: (context, snapshot) {
-                      final isSubscribed = snapshot.data ?? false;
-                      if (isSubscribed) {
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildStatChip(Icons.library_books, '15 Sets', Colors.white),
-                            _buildStatChip(Icons.quiz, '150 Questions', Colors.white),
-                            _buildStatChip(Icons.access_time, '10 Min/Set', Colors.white),
-                          ],
-                        );
-                      } else {
-                        return Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                _buildStatChip(Icons.library_books, '2 Free Sets', Colors.white),
-                                _buildStatChip(Icons.quiz, '20 Questions', Colors.white),
-                                _buildStatChip(Icons.lock, '13 Locked', Colors.white),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.lock, color: Colors.white, size: 20),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Subscribe to unlock all 15 sets',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      }
-                    },
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStatChip(Icons.library_books, '15 Sets', Colors.white),
+                      _buildStatChip(Icons.quiz, '150 Questions', Colors.white),
+                      _buildStatChip(Icons.access_time, '10 Min/Set', Colors.white),
+                    ],
                   ),
                 ],
               ),
@@ -167,13 +113,7 @@ class _MCQSetsScreenState extends State<MCQSetsScreen> {
             const SizedBox(height: 16),
             // Sets List
             ...List.generate(15, (index) {
-              return FutureBuilder<bool>(
-                future: SubscriptionService.isSetLocked(widget.chapter.id, index + 1),
-                builder: (context, snapshot) {
-                  final isLocked = snapshot.data ?? false;
-                  return _buildSetCard(context, index + 1, isLocked);
-                },
-              );
+              return _buildSetCard(context, index + 1, false);
             }),
             const SizedBox(height: 20),
           ],
@@ -220,38 +160,20 @@ class _MCQSetsScreenState extends State<MCQSetsScreen> {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: isLocked
-                ? () async {
-                    // Show subscription screen
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => SubscriptionScreen(
-                          onSubscribe: () {
-                            _loadSubscriptionStatus();
-                            setState(() {}); // Refresh UI
-                          },
-                        ),
-                      ),
-                    );
-                    // Refresh after returning from subscription screen
-                    _loadSubscriptionStatus();
-                    setState(() {});
-                  }
-                : () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MCQQuestionsScreen(
-                          chapter: widget.chapter,
-                          setNumber: setNumber,
-                        ),
-                      ),
-                    ).then((_) {
-                      // Reload status after completing a set
-                      _loadSubscriptionStatus();
-                    });
-                  },
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MCQQuestionsScreen(
+                    chapter: widget.chapter,
+                    setNumber: setNumber,
+                  ),
+                ),
+              ).then((_) {
+                // Reload status after completing a set
+                _loadSubscriptionStatus();
+              });
+            },
             borderRadius: BorderRadius.circular(16),
             child: Container(
               padding: const EdgeInsets.all(20),

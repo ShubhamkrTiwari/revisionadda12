@@ -5,8 +5,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../utils/theme_provider.dart';
-import '../services/subscription_service.dart';
-import 'subscription_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final Function(ThemeMode)? onThemeModeChanged;
@@ -18,23 +16,12 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _isSubscribed = false;
   final int completedSets = 0;
   final int freeLimit = 5;
 
   @override
   void initState() {
     super.initState();
-    _loadSubscriptionStatus();
-  }
-
-  Future<void> _loadSubscriptionStatus() async {
-    final subscribed = await SubscriptionService.isSubscribed();
-    if (mounted) {
-      setState(() {
-        _isSubscribed = subscribed;
-      });
-    }
   }
 
   Future<void> _toggleDarkMode(bool value, ThemeProvider themeProvider) async {
@@ -175,55 +162,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSubscribeButton(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colorScheme.primary,
-            colorScheme.primary.withOpacity(0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.primary.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const SubscriptionScreen()),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Text(
-          'Upgrade to Pro',
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: colorScheme.onPrimary,
-            letterSpacing: 0.2,
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildThemeToggle(
     BuildContext context, {
@@ -328,7 +266,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
-          if (!_isSubscribed) _buildSubscribeButton(context),
         ],
       ),
     ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0);

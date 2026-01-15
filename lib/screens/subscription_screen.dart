@@ -2,13 +2,48 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/subscription_service.dart';
 
-class SubscriptionScreen extends StatelessWidget {
+class SubscriptionScreen extends StatefulWidget {
   final VoidCallback? onSubscribe;
 
   const SubscriptionScreen({
     super.key,
     this.onSubscribe,
   });
+
+  @override
+  State<SubscriptionScreen> createState() => _SubscriptionScreenState();
+}
+
+class _SubscriptionScreenState extends State<SubscriptionScreen>
+    with WidgetsBindingObserver {
+  bool _openedPaymentGateway = false;
+  bool _paymentDialogShown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        _openedPaymentGateway &&
+        !_paymentDialogShown &&
+        mounted) {
+      _paymentDialogShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _showPaymentConfirmationDialog(context);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -335,20 +370,7 @@ class SubscriptionScreen extends StatelessWidget {
     
     try {
       final uri = Uri.parse(paymentLink);
-      
-      // Check if URL can be launched
-      if (!await canLaunchUrl(uri)) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Could not open payment link. Please try again.'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
-      }
-      
+
       // Show payment screen with amount and instructions
       if (context.mounted) {
         _showPaymentScreenWithInstructions(context, amount);
@@ -359,14 +381,16 @@ class SubscriptionScreen extends StatelessWidget {
       
       // Close payment screen dialog before opening gateway
       if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
+        final navigator = Navigator.of(context, rootNavigator: true);
+        if (navigator.canPop()) {
+          navigator.pop();
+        }
       }
       
       // Open payment gateway
-      final launched = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
+      // On some Android devices (Android 11+ package visibility), canLaunchUrl may return
+      // false even when a browser exists. So we attempt launchUrl directly.
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
       
       if (!launched) {
         if (context.mounted) {
@@ -377,21 +401,24 @@ class SubscriptionScreen extends StatelessWidget {
             ),
           );
         }
+        _openedPaymentGateway = false;
+        _paymentDialogShown = false;
         return;
       }
-      
-      // Wait a bit before showing confirmation dialog (to allow user to complete payment)
-      await Future.delayed(const Duration(seconds: 2));
-      
-      // Show dialog to confirm payment completion
-      if (context.mounted) {
-        _showPaymentConfirmationDialog(context);
-      }
+
+      _openedPaymentGateway = true;
+      _paymentDialogShown = false;
     } catch (e) {
       // Close payment screen if still open
       if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst || !route.willHandlePopInternally);
+        final navigator = Navigator.of(context, rootNavigator: true);
+        if (navigator.canPop()) {
+          navigator.pop();
+        }
       }
+
+      _openedPaymentGateway = false;
+      _paymentDialogShown = false;
       
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -630,12 +657,17 @@ class SubscriptionScreen extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              _openedPaymentGateway = false;
+              _paymentDialogShown = false;
+              Navigator.pop(context);
+            },
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context); // Close dialog
+              _openedPaymentGateway = false;
               await _processPayment(context);
             },
             style: ElevatedButton.styleFrom(
@@ -752,7 +784,7 @@ class SubscriptionScreen extends StatelessWidget {
                       }
 
                       // Callback to refresh parent screens
-                      onSubscribe?.call();
+                      widget.onSubscribe?.call();
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),

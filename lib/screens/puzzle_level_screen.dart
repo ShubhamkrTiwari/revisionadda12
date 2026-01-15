@@ -1,9 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/subject.dart';
-import '../services/subscription_service.dart';
 import 'game_types_screen.dart';
-import 'subscription_screen.dart';
 
 class PuzzleLevelScreen extends StatefulWidget {
   final Subject subject;
@@ -183,44 +181,13 @@ class _PuzzleLevelScreenState extends State<PuzzleLevelScreen>
                         ),
                       ),
                       const SizedBox(height: 8),
-                      FutureBuilder<bool>(
-                        future: SubscriptionService.isSubscribed(),
-                        builder: (context, snapshot) {
-                          final isSubscribed = snapshot.data ?? false;
-                          if (isSubscribed) {
-                            return const Text(
-                              'Choose a game type to play',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white70,
-                              ),
-                              textAlign: TextAlign.center,
-                            );
-                          } else {
-                            return Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.lock, color: Colors.white, size: 20),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Subscribe to unlock all games',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-                        },
+                      const Text(
+                        'Choose a game type to play',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white70,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
@@ -316,113 +283,71 @@ class _PuzzleLevelScreenState extends State<PuzzleLevelScreen>
           ),
         );
       },
-      child: FutureBuilder<bool>(
-        future: SubscriptionService.isGameLocked(
-          widget.subject.id,
-          game['name'] as String,
-        ),
-        builder: (context, snapshot) {
-          final isLocked = snapshot.data ?? false;
-          return InkWell(
-            onTap: isLocked
-                ? () async {
-                    // Show subscription screen
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => SubscriptionScreen(
-                          onSubscribe: () {
-                            setState(() {}); // Refresh UI
-                          },
-                        ),
-                      ),
-                    );
-                    // Refresh after returning from subscription screen
-                    setState(() {});
-                  }
-                : () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => GameTypesScreen(
-                          subject: widget.subject,
-                          gameType: game['name'] as String,
-                        ),
-                      ),
-                    ).then((_) {
-                      // Reload status after completing a game
-                      setState(() {});
-                    });
-                  },
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: _getGradientColors(game['color'] as Color),
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: (game['color'] as Color).withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        isLocked ? Icons.lock : game['icon'] as IconData,
-                        color: Colors.white,
-                        size: 40,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        game['name'] as String,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        isLocked ? 'Locked' : game['description'] as String,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white70,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                  if (isLocked)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.5),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.lock,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                      ),
-                    ),
-                ],
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => GameTypesScreen(
+                subject: widget.subject,
+                gameType: game['name'] as String,
               ),
             ),
-          );
+          ).then((_) {
+            // Reload status after completing a game
+            setState(() {});
+          });
         },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: _getGradientColors(game['color'] as Color),
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: (game['color'] as Color).withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    game['icon'] as IconData,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    game['name'] as String,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    game['description'] as String,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.white70,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
