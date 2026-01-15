@@ -5,7 +5,7 @@ class SubscriptionService {
   static const String _completedSetsKey = 'completed_mcq_sets';
   static const String _completedGamesKey = 'completed_games';
   static const int _freeSetsLimit = 2;
-  static const int _freeGamesLimit = 2;
+  static const int _freeGamesLimit = 1;
 
   // Check if user is subscribed
   static Future<bool> isSubscribed() async {
@@ -89,11 +89,10 @@ class SubscriptionService {
     final subscribed = await isSubscribed();
     if (subscribed) return false; // All games unlocked if subscribed
     
-    // All games locked until subscription
-    return true;
+    final completedGames = await getCompletedGamesCount();
+    return completedGames >= _freeGamesLimit;
   }
 
   // Get free games limit
   static int getFreeGamesLimit() => _freeGamesLimit;
 }
-

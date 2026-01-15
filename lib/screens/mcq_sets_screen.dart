@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/subject.dart';
 import '../services/subscription_service.dart';
 import 'mcq_questions_screen.dart';
+import 'subscription_screen.dart';
 
 class MCQSetsScreen extends StatefulWidget {
   final Chapter chapter;
@@ -26,9 +27,10 @@ class _MCQSetsScreenState extends State<MCQSetsScreen> {
   }
 
   Future<void> _loadSubscriptionStatus() async {
+    final subscribed = await SubscriptionService.isSubscribed();
     final completedCount = await SubscriptionService.getCompletedSetsCount();
     setState(() {
-      _isSubscribed = true;
+      _isSubscribed = subscribed;
       _completedSetsCount = completedCount;
     });
   }
@@ -113,7 +115,10 @@ class _MCQSetsScreenState extends State<MCQSetsScreen> {
             const SizedBox(height: 16),
             // Sets List
             ...List.generate(15, (index) {
-              return _buildSetCard(context, index + 1, false);
+              final setNumber = index + 1;
+              final isLocked = !_isSubscribed &&
+                  setNumber > 1; // Only the first set is free
+              return _buildSetCard(context, setNumber, isLocked);
             }),
             const SizedBox(height: 20),
           ],
@@ -161,6 +166,19 @@ class _MCQSetsScreenState extends State<MCQSetsScreen> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
+              if (isLocked) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SubscriptionScreen(
+                      onSubscribe: () {
+                        _loadSubscriptionStatus();
+                      },
+                    ),
+                  ),
+                );
+                return;
+              }
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -234,20 +252,21 @@ class _MCQSetsScreenState extends State<MCQSetsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Set',
+                        Text(
+                          'Set $setNumber',
                           style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isLocked ? Colors.grey : Colors.black87,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           isLocked ? 'Locked' : '10 Questions',
                           style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
                             color: isLocked ? Colors.grey : Colors.green,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                         const SizedBox(height: 8),

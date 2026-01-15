@@ -9,6 +9,7 @@ import 'word_search_game_screen.dart';
 import 'fill_blanks_game_screen.dart';
 import 'true_false_game_screen.dart';
 import 'sequence_game_screen.dart';
+import 'subscription_screen.dart';
 
 class GameTypesScreen extends StatefulWidget {
   final Subject subject;
@@ -25,23 +26,59 @@ class GameTypesScreen extends StatefulWidget {
 }
 
 class _GameTypesScreenState extends State<GameTypesScreen> {
+  bool _isLocked = false;
+
   @override
   void initState() {
     super.initState();
-    // Mark game as completed when user starts playing
-    _markGameStarted();
+    _checkLockStatus();
   }
 
-  Future<void> _markGameStarted() async {
-    // Mark game as completed when user plays it (for both free and subscribed users)
-    await SubscriptionService.markGameCompleted(
+  Future<void> _checkLockStatus() async {
+    final isLocked = await SubscriptionService.isGameLocked(
       widget.subject.id,
       widget.gameType,
     );
+
+    if (isLocked) {
+      if (mounted) {
+        await Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SubscriptionScreen(
+              onSubscribe: () {
+                // Reload the status after subscription
+                _checkLockStatus();
+              },
+            ),
+          ),
+        );
+      }
+    } else {
+      // Mark game as completed only when it's played
+      await SubscriptionService.markGameCompleted(
+        widget.subject.id,
+        widget.gameType,
+      );
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLocked = isLocked;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLocked) {
+      return const Scaffold(
+        body: Center(
+          child: Text('Redirecting to subscription...'),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.gameType} - ${widget.subject.name}'),
@@ -55,7 +92,7 @@ class _GameTypesScreenState extends State<GameTypesScreen> {
       case 'Puzzle':
         return PuzzleGameScreen(
           subject: widget.subject,
-          level: 1,
+          level: 1, // Example level
           onComplete: () {},
         );
       case 'Matching':
@@ -77,4 +114,3 @@ class _GameTypesScreenState extends State<GameTypesScreen> {
     }
   }
 }
-
