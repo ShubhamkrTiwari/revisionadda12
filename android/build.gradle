@@ -1,18 +1,34 @@
+buildscript {
+    ext.kotlin_version = '1.8.22'  // Slightly older version that works well with Flutter
+    repositories {
+        google()
+        mavenCentral()
+    }
+    
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.4.2'  // Compatible version
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
 allprojects {
     repositories {
         google()
         mavenCentral()
     }
     
+    // Set Java compatibility for all projects
     tasks.withType(JavaCompile).configureEach {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
         options.compilerArgs.addAll(['-Xlint:-options'])
     }
     
+    // Set Kotlin compatibility for all projects
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
         kotlinOptions {
-            jvmTarget = "17"
+            jvmTarget = '1.8'  // Changed to match Java version
+            freeCompilerArgs += '-Xjvm-default=all'
         }
     }
 }
